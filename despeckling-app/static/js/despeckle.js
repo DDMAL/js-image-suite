@@ -4,7 +4,6 @@ var imageObj;
 var scaleVal = 1;
 var BLACK = 0;
 var WHITE = 255;
-var FAIL = 128;
 var rScale = 0.2989;
 var gScale = 0.5870;
 var bScale = 0.1140;
@@ -30,9 +29,6 @@ function IData(data) {
     };
     this.isBlack = function(x, y) {
         return this.getPoint(x, y) === BLACK;
-    };
-    this.isFail = function(x, y) {
-        return this.getPoint(x, y) === FAIL;
     };
 }
 
@@ -77,8 +73,6 @@ initImage = function() {
     binarize(47);
 };
 
-
-
 despeckle = function(size) {
     var cSize = size;
     var canvas = document.getElementById("imview");
@@ -87,24 +81,31 @@ despeckle = function(size) {
     if (cSize > 0) {
         var imageDataO = context.getImageData(0, 0, canvas.width, canvas.height);
         var dataO = new IData(imageDataO.data);
-        var imageDataT = context.getImageData(0, 0, canvas.width, canvas.height);
-        var dataT = new IData(imageDataT.data);
+        
+        dataT = new Array(imageObj.width);
+        for (var i = 0; i < imageObj.width; i++) {
+            dataT[i] = new Array(imageObj.height);
+            for (var j = 0; j < dataT[i].length; j++) {
+                dataT[i][j] = 0;
+            }
+        }
+        
         var pixelQueue = [];
         for (var y = 0; y < imageObj.height; ++y) {
             for (var x = 0; x < imageObj.width; ++x) {
-                if (dataT.isBlack(x, y) && dataO.isBlack(x, y)) {
+                if (dataT[x][y] == 0 && dataO.isBlack(x, y)) {
                     pixelQueue = new Array();
                     pixelQueue.push(new Point(x, y));
                     var bail = false;
-                    dataT.setPoint(x, y, WHITE);
+                    dataT[x][y] = 1;
                     for (var i = 0; (i < pixelQueue.length) && (pixelQueue.length < cSize); ++i) {
                         var center = pixelQueue[i];
                         for (var y2 = ((center.y > 0) ? center.y - 1 : 0); (y2 < Math.min(center.y + 2, imageObj.height)); ++y2) {
                             for (var x2 = ((center.x > 0) ? center.x - 1 : 0); (x2 < Math.min(center.x + 2, imageObj.width)); ++x2) {
-                                if (dataT.isBlack(x2, y2) && dataO.isBlack(x2, y2)) {
-                                    dataT.setPoint(x2, y2, WHITE);
+                                if (dataT[x2][y2] == 0 && dataO.isBlack(x2, y2)) {
+                                    dataT[x2][y2] = 1;
                                     pixelQueue.push(new Point(x2, y2));
-                                } else if (dataT.isFail(x2, y2)) {
+                                } else if (dataT[x2][y2] == 2) {
                                     bail = true;
                                     break;
                                 }
@@ -124,7 +125,7 @@ despeckle = function(size) {
                     } else {
                         while (pixelQueue.length > 0) {
                             var pointT = pixelQueue.pop();
-                            dataT.setPoint(pointT.x, pointT.y, FAIL);
+                            dataT[pointT.x][pointT.y] = 2;
                         }
                     }
                 }
@@ -139,8 +140,6 @@ despeckle = function(size) {
 binarize = function(thresh) {
     var canvas = document.getElementById("imview");
     var context = canvas.getContext("2d");
-    //$("#threshsend").attr("value", thresh);
-    //globalThresh = thresh;
     //Have to redraw image and then scrape data
     context.drawImage(imageObj, 0, 0);
     var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
