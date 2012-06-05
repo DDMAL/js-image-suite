@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Segmentation-App</title>
+        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+		<script src="../static/js/kinetic-v3.9.7.min.js"></script>
+		<script src="../static/js/segment.js"></script>
+    </head>
+    <body onmousedown="return false;">
+        <h1>Segment</h1>
+		<button onclick="addPoly()">Add Poly</button>
+		<button id="delete" onclick="removePoly()">Remove Poly</button>
+		<button onclick="logPolys()">Log Polys</button>
+		<button onclick="addLeftEnd()">addLeftEnd</button>
+		<button onclick="addRightEnd()">addRightEnd</button>
+		<button onclick="removeLeftEnd()">removeLeftEnd</button>
+		<button onclick="removeRightEnd()">removeRightEnd</button>
+        <div class="canvases">
+			<div id="container"></div>
+            <!--canvas id="imview" width=1000 height=1000 alt="Image Preview"></canvas-->
+        </div>
+    </body>
+</html>
