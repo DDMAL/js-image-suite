@@ -17,9 +17,12 @@
 		<button onclick="addRightEnd()">addRightEnd</button>
 		<button onclick="removeLeftEnd()">removeLeftEnd</button>
 		<button onclick="removeRightEnd()">removeRightEnd</button>
+		<form method="POST" action="/imagemask">
+			<input type="hidden" name="JSON" />
+			<input type="submit" value="Submit" />
+		</form>
         <div class="canvases">
 			<div id="container"></div>
-            <!--canvas id="imview" width=1000 height=1000 alt="Image Preview"></canvas-->
         </div>
     </body>
 </html>
