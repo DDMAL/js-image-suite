@@ -6,21 +6,20 @@
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
 		<script src="../static/js/jquery.knob.js"></script>
+		<script src="../static/js/kinetic-v3.9.7.min.js"></script>
 		<script src="../static/js/rotate.js"></script>
-       	<script>
-			
-		</script>
     </head>
     
     <body>
         <h1>Rotate</h1>
         <div class="buttons">
             <input class="knob" id="dialctrl" data-cursor=true data-thickness=".3"></input>
-            <input name="tval" type="button" id="threshsend"></input>
+            <input name="togleRuler" type="button" onclick="toggleRuler()" value="Toggle Ruler"></input>
+			<input name="togleRuler" type="button" onclick="reorientRuler()" value="Reorient Ruler"></input>
         </div>
         <br>
         <div class="canvases">
-            <canvas id="imview" width=1000 height=1000 alt="Image Preview"></canvas>
+            <div id="container"></div>
         </div>
     </body>
 </html>
