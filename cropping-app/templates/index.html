@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Cropping-App</title>
+        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+		<script src="../static/js/kinetic-v3.9.7.min.js"></script>
+		<script src="../static/js/crop.js"></script>
+    </head>
+    <body onmousedown="return false;">
+        <h1>Crop</h1>
+		<form method="POST" action="/imagemask">
+			<input type="hidden" name="JSON" />
+			<input type="submit" value="Submit" />
+		</form>
+        <div class="canvases">
+			<div id="container"></div>
+        </div>
+    </body>
+</html>
