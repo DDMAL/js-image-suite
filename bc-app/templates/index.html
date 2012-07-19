@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>BC-App</title>
+        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+        <script src="../static/js/bc.js"></script>
+        <style type="text/css">
+            body
+            {
+                align:center;
+            }
+            h1
+            {
+                text-align:center;
+            }
+            #threshsend
+            {
+                width:100px;
+                height:25px;
+                font-size:15px;
+            }
+            div.buttons
+            {
+                padding:10px;
+            }
+            div.buttons form
+            {
+                display:inline;
+            }
+            div.canvases
+            {
+                float:left;
+                white-space: nowrap;
+            }
+            div.canvases canvas
+            {
+                border-style:solid;
+                border-width:2px;
+                display:inline;
+                margin:-3px;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <h1>Brightness/Contrast</h1>
+        <div id="bslider"></div>
+		<br>
+		<div id="cslider"></div>
+        <br>
+        <div class="canvases">
+            <canvas id="imview" width=859 height=1111 alt="Image Preview"></canvas>
+            <canvas id="imorig" width=859 height=1111 alt="Original Image"></canvas>
+        </div>
+    </body>
+</html>

@@ -87,7 +87,7 @@ initImage = function() {
 rotate = function(angle) {
     var image = stage.get(".image")[0];
     image.setRotationDeg(angle);
-    image.getLayer().draw()
+    image.getLayer().draw();
 }
 
 toggleRuler = function() {
