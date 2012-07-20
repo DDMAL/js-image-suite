@@ -1,6 +1,10 @@
 var imageObj;
 var gB = 1;
 var gC = 1;
+//Scale values for grayscaling RGB (taken from http://www.mathworks.com/help/toolbox/images/ref/rgb2gray.html )
+var rScale = 0.2989;
+var gScale = 0.5870;
+var bScale = 0.1140;
 
 //Setup
 window.onload = function() {
