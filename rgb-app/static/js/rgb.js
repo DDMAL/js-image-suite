@@ -5,6 +5,7 @@ var gB = 1;
 var gBand = 0.01;
 var gPos = -1;
 var stage;
+var selectionSquare = null;
 
 //Setup
 window.onload = function() {
@@ -27,13 +28,12 @@ window.onload = function() {
             height: imageObj.height,
             image: imageObj
         });
-        image.on("click", function (e) {
-            var pos = stage.getMousePosition(e);
-            var pX = pos.x;
-            var pY = pos.y;
-            var dPos = pX * 4 + pY * 4 * imageObj.width;
-            gPos = dPos;
-            removeColour(dPos);
+        image.on("mousedown", function(e) {
+            dragMouse(e);
+            image.on("mousemove", dragMouse);
+            image.on("mouseup", function() {
+                image.off("mousemove");
+            });
         })
 
         layer.add(image);
@@ -55,6 +55,30 @@ window.onload = function() {
     };
     
     imageObj.src = "/static/images/CF-026_400.jpg";
+    
+    function dragMouse(e) {
+        var pos = stage.getMousePosition(e);
+        var pX = pos.x - 3;
+        var pY = pos.y - 3;
+        var dPos = pX * 4 + pY * 4 * imageObj.width;
+        gPos = dPos;
+        removeColour(dPos);
+        if (selectionSquare != null) {
+            stage.remove(selectionSquare.getLayer());
+        }
+        selectionSquare = new Kinetic.Line({
+            points: [pX-2, pY-2,
+                     pX+2, pY-2,
+                     pX+2, pY+2,
+                     pX-2, pY+2,
+                     pX-2, pY-2],
+            stroke: 'black',
+            strokeWidth: 1
+        });
+        var sLayer = new Kinetic.Layer();
+        sLayer.add(selectionSquare);
+        stage.add(sLayer);
+    }
     
     function removeColour(dPos) {
         canvasV = document.getElementById("imview");
