@@ -43,9 +43,10 @@ window.onload = function() {
     imageObj.src = "/static/images/CF-026_400.jpg";
     
     function greyscale(data) {
+        var dLen = data.length;
         var gData = [];
         var i, brightness;
-        for (i = 0; i < data.length; i += 4) {
+        for (i = 0; i < dLen; i += 4) {
             brightness = rScale * data[i] + gScale * data[i + 1] + bScale * data[i + 2];
             gData[i] = brightness;
             gData[i+1] = brightness;
@@ -56,21 +57,22 @@ window.onload = function() {
     }
     
     function blendColour(data, colour, factor) {
+        var dLen = data.length;
         var i;
         if (factor <= 0) {
-            for (i = 0; i < data.length; i += 4) {
+            for (i = 0; i < dLen; i += 4) {
                 data[i] = colour;
                 data[i+1] = colour;
                 data[i+2] = colour;
             }
         } else if (factor < 1) {
-            for (i = 0; i < data.length; i += 4) {
+            for (i = 0; i < dLen; i += 4) {
                 data[i] = colour + factor * (data[i] - colour);
                 data[i+1] = colour + factor * (data[i+1] - colour);
                 data[i+2] = colour + factor * (data[i+2] - colour);
             }
         } else if (factor > 1) {
-            for (i = 0; i < data.length; i += 4) {
+            for (i = 0; i < dLen; i += 4) {
                 data[i] = colour + factor * (data[i] - colour);
                 data[i+1] = colour + factor * (data[i+1] - colour);
                 data[i+2] = colour + factor * (data[i+2] - colour);
@@ -94,24 +96,25 @@ window.onload = function() {
     }
     
     function blendImage(data1, data2, factor) {
-        if (data1.length != data2.length) {
+        var dLen = data1.length;
+        if (dLen != data2.length) {
             return;
         }
         var i;
         if (factor <= 0) {
-            for (i = 0; i < data1.length; i += 4) {
+            for (i = 0; i < dLen; i += 4) {
                 data1[i] = data2[i];
                 data1[i+1] = data2[i+1];
                 data1[i+2] = data2[i+2];
             }
         } else if (factor < 1) {
-            for (i = 0; i < data1.length; i += 4) {
+            for (i = 0; i < dLen; i += 4) {
                 data1[i] = data2[i] + factor * (data1[i] - data2[i]);
                 data1[i+1] = data2[i+1] + factor * (data1[i+1] - data2[i+1]);
                 data1[i+2] = data2[i+2] + factor * (data1[i+2] - data2[i+2]);
             }
         } else if (factor > 1) {
-            for (i = 0; i < data1.length; i += 4) {
+            for (i = 0; i < dLen; i += 4) {
                 data1[i] = data2[i] + factor * (data1[i] - data2[i]);
                 data1[i+1] = data2[i+1] + factor * (data1[i+1] - data2[i+1]);
                 data1[i+2] = data2[i+2] + factor * (data1[i+2] - data2[i+2]);
@@ -135,12 +138,13 @@ window.onload = function() {
     }
     
     function averageShade(data) {
+        var dLen = data.length;
         var histo = [];
         var i;
         for (i = 0; i < 256; i++) {
             histo[i] = 0;
         }
-        for (i = 0; i < data.length; i += 4) {
+        for (i = 0; i < dLen; i += 4) {
             var brightness = rScale * data[i] + gScale * data[i + 1] + bScale * data[i + 2];
             histo[Math.round(brightness)]++;
         }
