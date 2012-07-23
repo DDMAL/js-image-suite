@@ -2,10 +2,12 @@ var imageObj;
 var gBrightness = 1;
 var gContrast = 1;
 var gColour = 1;
+var ordering = 0;
 //Scale values for grayscaling RGB (taken from http://www.mathworks.com/help/toolbox/images/ref/rgb2gray.html )
 var rScale = 0.2989;
 var gScale = 0.5870;
 var bScale = 0.1140;
+var averageColour, gImage;
 
 //Setup
 window.onload = function() {
@@ -31,6 +33,11 @@ window.onload = function() {
         $("#brightness-slider").width(imageObj.width * 2);
         $("#contrast-slider").width(imageObj.width * 2);
         $("#colour-slider").width(imageObj.width * 2);
+        
+        var imageData = contextO.getImageData(0, 0, canvasV.width, canvasV.height);
+        var data = imageData.data;
+        averageColour = averageShade(data);
+        gImage = greyscale(data);
     };
     
     imageObj.src = "/static/images/CF-026_400.jpg";
@@ -48,7 +55,7 @@ window.onload = function() {
         return gData;
     }
     
-    function blend(data, colour, factor) {
+    function blendColour(data, colour, factor) {
         var i;
         if (factor <= 0) {
             for (i = 0; i < data.length; i += 4) {
@@ -154,11 +161,38 @@ window.onload = function() {
         
         imageData = contextO.getImageData(0, 0, canvasV.width, canvasV.height);
         data = imageData.data;
-        blend(data, 0, gBrightness);
-        blend(data, averageShade(data), gContrast);
-        blendImage(data, greyscale(data), gColour);
+        if (ordering == 0) {
+            blendColour(data, 0, gBrightness);
+            blendColour(data, averageShade(data), gContrast);
+            blendImage(data, greyscale(data), gColour);
+        } else if (ordering == 1) {
+            blendColour(data, 0, gBrightness);
+            blendImage(data, greyscale(data), gColour);
+            blendColour(data, averageShade(data), gContrast);
+        } else if (ordering == 2) {
+            blendColour(data, averageColour, gContrast);
+            blendColour(data, 0, gBrightness);
+            blendImage(data, greyscale(data), gColour);
+        } else if (ordering == 3) {
+            blendColour(data, averageColour, gContrast);
+            blendImage(data, greyscale(data), gColour);
+            blendColour(data, 0, gBrightness);
+        } else if (ordering == 4) {
+            blendImage(data, gImage, gColour);
+            blendColour(data, 0, gBrightness);
+            blendColour(data, averageShade(data), gContrast);
+        } else {
+            blendImage(data, gImage, gColour);
+            blendColour(data, averageShade(data), gContrast);
+            blendColour(data, 0, gBrightness);
+        }
         contextV.putImageData(imageData, 0, 0);
     }
+    
+    $("#ordering").change(function() {
+        ordering = $("#ordering option:selected").attr("value");
+        bcProcess();
+    });
     
     $("#brightness-slider").slider({
                         animate: true,

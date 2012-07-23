@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>BCC-App</title>
+        <title>Luminance-App</title>
         <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
@@ -46,10 +46,21 @@
     
     <body>
         <h1>Brightness/Contrast/Colour</h1>
+		<select id="ordering">
+			<option value="0">Brightness->Contrast->Colour</option>
+			<option value="1">Brightness->Colour->Contrast</option>
+			<option value="2">Contrast->Brightness->Colour</option>
+			<option value="3">Contrast->Colour->Brightness</option>
+			<option value="4">Colour->Brightness->Contrast</option>
+			<option value="5">Colour->Contrast->Brightness</option>
+		</select>
+		<p>Brightness</p>
         <div id="brightness-slider"></div>
 		<br>
+		<p>Contrast</p>
 		<div id="contrast-slider"></div>
         <br>
+		<p>Colour</p>
 		<div id="colour-slider"></div>
         <br>
         <div class="canvases">
