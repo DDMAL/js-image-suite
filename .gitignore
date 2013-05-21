@@ -33,3 +33,4 @@ pip-log.txt
 *.tif
 *.tiff
 *.DS_Store
+segmentation-app/static/mei/multiple_sectionsI.mei

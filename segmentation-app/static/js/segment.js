@@ -1,432 +1,625 @@
-//Default threshold before user input
-//Maximum value for greyness
-//Scale values for grayscaling RGB (taken from http://www.mathworks.com/help/toolbox/images/ref/rgb2gray.html )
-var widthLim = 1000;
-var heightLim = 1000;
-defBoxX = 10;
-defBoxY = 10;
-defBoxW = 100;
-defBoxH = 50;
-defColour = "blue"
-defSelColour = "red"
-var jsonPath = "/static/json_in/imdata.json";
-var imageObj;
-var stage;
-var sPoints;
-var scaleVal = 1;
+(function ($) {
+    "use strict";
+    $(document).ready(function() {
+        // Kinetic Stage
+        var stage;
+    
+        // Image Object
+        var imageObj = new Image();
+    
+        //Fraction of image width to make the margin
+        var marginWidth = 0.05;
 
-function IData(data) {
-    this.data = data;
-    this.getPoint = function(x, y) {
-        var convX = x * 4;
-        var convY = y * imageObj.width * 4;
-        return this.data[convX + convY];
-    };
-    this.setPoint = function(x, y, val) {
-        var convX = x * 4;
-        var convY = y * imageObj.width * 4;
-        this.data[convX + convY] = val;
-        this.data[convX + convY + 1] = val;
-        this.data[convX + convY + 2] = val;
-    };
-    this.isBlack = function(x, y) {
-        return this.getPoint(x, y) === BLACK;
-    };
-    this.isFail = function(x, y) {
-        return this.getPoint(x, y) === FAIL;
-    };
-}
+        // Vertical padding for the polygons
+        var polyPadding = 2;
 
-//Setup
-$(document).ready(function() {
-    imageObj = new Image();
-    //Calculate initial threshold with the Brink formula and draw binarized image
-    imageObj.onload = initImage;
+        // Pixel margin size
+        var margin = 0;
     
-    //Image path (TO BE REPLACED LATER)
-    imageObj.src = "/static/images/testim.jpg";
-});
-
-initImage = function() {
-    if (imageObj.width > widthLim || imageObj.height > heightLim) {
-        var scaleValX = 0;
-        var scaleValY = 0;
-        scaleValX = widthLim / imageObj.width;
-        scaleValY = heightLim / imageObj.height;
-        scaleVal = Math.min(scaleValX, scaleValY);
-        imageObj.height *= scaleVal;
-        imageObj.width *= scaleVal;
-    }
+        //Scale factor for scaled image
+        var scaleVal = 1;
     
-    stage = new Kinetic.Stage({
-        container: "container",
-        width: imageObj.width,
-        height: imageObj.height
-    });
-    var layer = new Kinetic.Layer();
-    var image = new Kinetic.Image({
-        x: 0,
-        y: 0,
-        width: imageObj.width,
-        height: imageObj.height,
-        image: imageObj
-    });
+        //Default polygon colour
+        var pDefColour = 'blue';
     
-    layer.add(image);
-    stage.add(layer);
+        //Selected polygon colour
+        var pSelColour = 'red';
     
-    image.on("mousedown", function() {
-        resetColours();
-    });
-    $.get(jsonPath, function(data) {
-        sPoints = $(data);
-        var polys = new Array(sPoints.length);
-        for (var i = 0; i < sPoints.length; i++) {
-            polys[i] = new Array();
-            for (var j = 0; j < sPoints[i].length; j++) {
-                polys[i].push(sPoints[i][j][0] * scaleVal);
-                polys[i].push(sPoints[i][j][1] * scaleVal);
+        //Currently selected polygon
+        var selectedPoly = null;
+    
+        var selectedPoints = [];
+    
+        var selectionBox = null;   
+    
+        function selectPoly(poly) {
+            if (selectedPoly !== null && selectedPoly !== poly) {
+                selectedPoly.attrs.fill = pDefColour;
+                selectedPoly.getLayer().draw();
+                selectedPoly = null;
             }
-            addPoly(polys[i], 0, 0);
-        }
-        logPolys();
-    });
-}
-
-addPoly = function(points, x, y, sel) {
-    var undef = false;
-    if (!points) {
-        points = [0, 0, 100, 0, 100, 50, 0, 50];
-    }
-    if (x == undefined) {
-        x = 10 + defBoxX;
-        undef = true;
-    }
-    if (y == undefined) {
-        y = 10 + defBoxY;
-        undef = true;
-    }
-    var group = new Kinetic.Group({
-        x: x,
-        y: y,
-        draggable: true,
-        name: "staff"
-    });
-    
-    var layer = new Kinetic.Layer();
-    
-    layer.add(group);
-    stage.add(layer);
-    
-    var poly = new Kinetic.Polygon({
-        points: points,
-        fill: sel ? defSelColour : defColour,
-        stroke: 'black',
-        strokeWidth: 2,
-        alpha: .2,
-        name: "poly"
-    });
-    
-    group.add(poly);
-    
-    for (var i in poly.attrs.points) {
-        var point = poly.attrs.points[i];
-        addAnchor(group, point.x, point.y, i);
-    }
-    group.on("dragstart", function() {
-        this.moveToTop();
-    });
-    group.on("mousedown touchstart", function() {
-        resetColours();
-        poly.attrs.fill = defSelColour;
-        layer.draw();
-    });
-    group.on("dragend", function() {
-        logPolys();
-    });
-    
-    if (undef) {
-        defBoxX += 10;
-        defBoxY += 10;
-    }
-    
-    stage.draw();
-    logPolys();
-}
-
-update = function(group, activeAnchor) {
-    var poly = group.get(".poly")[0];
-    var anchorI = activeAnchor.getName();
-    var pA = group.get("." + anchorI)[0];
-    var pointA = poly.attrs.points[anchorI];
-    var nPoints = poly.attrs.points.length;
-    var internal = true;
-    if (anchorI == 0
-        || anchorI == ((nPoints / 2) - 1)
-        || anchorI == (nPoints / 2)
-        || anchorI == (nPoints - 1)) {
-        internal = false;
-    }
-    if (internal) {
-        var pointB, pB;
-        for (var i in poly.attrs.points) {
-            var pointT = poly.attrs.points[i];
-            if (pointT.x == pointA.x && pointT !== pointA) {
-                pointB = pointT;
-                pB = group.get("." + i)[0];
-                pointB.x = pA.attrs.x;
-                pB.attrs.x = pA.attrs.x;
+            if (poly) {
+                poly.attrs.fill = pSelColour;
+                selectedPoly = poly;
+                poly.getLayer().draw();
             }
         }
-    }
-    pointA.y = pA.attrs.y;
-    pointA.x = pA.attrs.x;
-    logPolys();
-}
-
-addAnchor = function(group, x, y, name) {
-    var stage = group.getStage();
-    var layer = group.getLayer();
     
-    var anchor = new Kinetic.Circle({
-        x: x,
-        y: y,
-        stroke: '#666',
-        fill: '#ddd',
-        strokeWidth: 1,
-        radius: 3,
-        name: name,
-        draggable: true
-    });
-    
-    anchor.on("dragmove", function() {
-        update(group, this);
-        layer.draw();
-    });
-    anchor.on("mousedown touchstart", function() {
-        group.draggable(false);
-        layer.draw();
-    });
-    anchor.on("dragend", function() {
-        group.draggable(true);
-        layer.draw();
-    })
-    anchor.on("mouseover", function() {
-        var layer = this.getLayer();
-        document.body.style.cursor = "pointer";
-        this.setStrokeWidth(3);
-        layer.draw();
-    });
-    anchor.on("mouseout", function() {
-        var layer = this.getLayer();
-        document.body.style.cursor = "default";
-        this.setStrokeWidth(1);
-        layer.draw();
-    });
-    
-    group.add(anchor);
-}
-
-addLeftEnd = function() {
-    var lX = 50;
-    
-    for (var i = stage.get(".staff").length - 1; i >= 0; i--) {
-        var group = stage.get(".staff")[i];
-        var layer = group.getLayer();
-        var poly = group.get(".poly")[0];
-        if (poly.attrs.fill == defSelColour) {
-            var pLen = poly.attrs.points.length;
-            var fP = poly.attrs.points[0];
-            var lP = poly.attrs.points[pLen - 1];
-            var minX = Math.min(fP.x, lP.x);
-            
-            var newPoints = new Array();
-            newPoints.push(minX - lX);
-            newPoints.push(fP.y);
-            for (var j in poly.attrs.points) {
-                var point = poly.attrs.points[j];
-                if (j == 0 || j == (pLen - 1)) {
-                    newPoints.push(minX);
+        function findNearestPoints(point) {
+            var minDist = -1;
+            var minGroup = null;
+            var minPoint = null;
+            var minNeighbour = null;
+            var g, i, gPoint, poly, nPoints, dist;
+            for (g in stage.get(".group")) {
+                if (stage.get(".group")[g] !== undefined) {
+                    var group = stage.get(".group")[g];
+                    gPoint = $.extend({}, true, point);
+                    gPoint.x -= group.getX();
+                    gPoint.y -= group.getY();
+                    poly = group.get(".poly")[0];
+                    nPoints = poly.getPoints().length;
+                    for (i = 0; i < nPoints; i++) {
+                        var anchor = group.attrs.anchors[i];
+                        var dY = anchor.getY() - gPoint.y;
+                        dist = Math.abs(dY);
+                        if (minDist < 0 || dist < minDist) {
+                            minDist = dist;
+                            minGroup = group;
+                        }
+                    }
+                }
+            }
+        
+            minDist = -1;
+            gPoint = $.extend({}, true, point);
+            gPoint.x -= minGroup.getX();
+            gPoint.y -= minGroup.getY();
+            poly = minGroup.get(".poly")[0];
+            nPoints = poly.getPoints().length;
+            for (i = 0; i < nPoints; i++) {
+                var A = minGroup.attrs.anchors[i];
+                var B = null;
+                if (i === (nPoints - 1)) {
+                    B = minGroup.attrs.anchors[0];
                 } else {
-                    newPoints.push(point.x);
+                    B = minGroup.attrs.anchors[i + 1];
                 }
-                newPoints.push(point.y);
+                var APx = gPoint.x - A.getX();
+                var APy = gPoint.y - A.getY();
+            
+                var ABx = B.getX() - A.getX();
+                var ABy = B.getY() - A.getY();
+            
+                var AB2 = (ABx * ABx) + (ABy * ABy);
+                var ABAP = (APx * ABx) + (APy * ABy);
+                var t = ABAP / AB2;
+                if (t < 0) {
+                    t = 0;
+                } else if (t > 1) {
+                    t = 1;
+                }
+                var Cx = A.getX() + (ABx * t);
+                var Cy = A.getY() + (ABy * t);
+                var Dx = Cx - gPoint.x;
+                var Dy = Cy - gPoint.y;
+                dist = Math.sqrt((Dx * Dx) + (Dy * Dy));
+                if (minDist < 0 || dist < minDist) {
+                    minDist = dist;
+                    minPoint = A;
+                    minNeighbour = B;
+                }
             }
-            newPoints.push(minX - lX);
-            newPoints.push(lP.y);
-            
-            var nX = group.attrs.x;
-            var nY = group.attrs.y;
-            
-            layer.remove(group);
-            stage.remove(layer);
-            addPoly(newPoints, nX, nY, true);
-            
-            break;
+            return [minPoint, minNeighbour];
         }
-    }
-    logPolys();
-}
+        
+        function flattenPoints(points) {
+            var fPoints = [];
+            var p;
+            for (p in points) {
+                if (points[p] !== undefined) {
+                    var point = points[p];
+                    fPoints.push(point.x);
+                    fPoints.push(point.y);
+                }
+            }
+            return fPoints;
+        }
+        
+        function selectAnchors(anchors) {
+            var a, anchor;
+            for (a in selectedPoints) {
+                if (selectedPoints[a] !== undefined) {
+                    anchor = selectedPoints[a];
+                    anchor.attrs.fill = '#ddd'; 
+                }
+            }
+            for (a in anchors) {
+                if (anchors[a] !== undefined) {
+                    anchor = anchors[a];
+                    anchor.attrs.fill = 'red';
+                    anchor.getLayer().draw();
+                }
+            }
+            selectedPoints = anchors;
+        }
+        
+        function addAnchor(group, x, y) {
+            var layer = group.getLayer();
 
-addRightEnd = function() {
-    var rX = 50;
+            var anchor = new Kinetic.Circle({
+                x: x,
+                y: y,
+                stroke: '#666',
+                fill: '#ddd',
+                strokeWidth: 1,
+                radius: 3,
+                draggable: true,
+                dragBoundFunc: function(pos) {
+                    var newX = pos.x < margin ? margin : pos.x;
+                    newX = newX > (margin + imageObj.width) ? (margin + imageObj.width) : newX;
+                    var newY = pos.y < margin ? margin : pos.y;
+                    newY = newY > (margin + imageObj.height) ? (margin + imageObj.height) : newY;
+                    return {
+                        x: newX,
+                        y: newY
+                    };
+                }
+            });
+            anchor.on("dragmove", function() {
+                var poly = group.get(".poly")[0];
+                var anchorI = group.attrs.anchors.indexOf(anchor);
+                var pA = group.attrs.anchors[anchorI];
+                var pointA = poly.attrs.points[anchorI];
+                var nPoints = poly.attrs.points.length;
+                pointA.y = pA.getY();
+                pointA.x = pA.getX();
+                layer.draw();
+            });
+            anchor.on("mousedown touchstart", function() {
+                group.setDraggable(false);
+                selectAnchors([this]);
+                layer.draw();
+            });
+            anchor.on("dragend", function() {
+                var poly = group.get(".poly")[0];
+                var minX = poly.attrs.points[0].x;
+                var minY = poly.attrs.points[0].y;
+                var maxX = 0;
+                var maxY = 0;
+                var p;
+                for (p in poly.getPoints()) {
+                    if (poly.getPoints()[p] !== undefined) {
+                        var point = poly.getPoints()[p];
+                        minX = Math.min(minX, point.x);
+                        minY = Math.min(minY, point.y);
+                        maxX = Math.max(maxX, point.x);
+                        maxY = Math.max(maxY, point.y);
+                    }
+                }
+                group.setDragBoundFunc(function(pos) {
+                    var newX = pos.x < (margin - minX) ? (margin - minX) : pos.x;
+                    newX = newX > (margin + imageObj.width) ? (margin + imageObj.width) : newX;
+                    var newY = pos.y < (margin + imageObj.width - maxX) ? (margin + imageObj.width - maxX) : pos.y;
+                    newY = newY > (margin + imageObj.height - maxY) ? (margin + imageObj.height - maxY) : newY;
+                    return {
+                        x: newX,
+                        y: newY
+                    };
+                });
+                poly.attrs.width = maxX - minX;
+                poly.attrs.height = maxY - minY;
+                group.setDraggable(true);
+                layer.draw();
+            });
+            anchor.on("mouseover", function() {
+                var layer = this.getLayer();
+                document.body.style.cursor = "pointer";
+                this.setStrokeWidth(3);
+                layer.draw();
+            });
+            anchor.on("mouseout", function() {
+                var layer = this.getLayer();
+                document.body.style.cursor = "default";
+                this.setStrokeWidth(1);
+                layer.draw();
+            });
+            group.attrs.anchors.push(anchor);
+            group.add(anchor);
+        }
+        
+        function removePoly(poly) {
+            var group, layer;
+            if (poly === undefined) {
+                var i;
+                for (i = stage.get(".group").length - 1; i >= 0; i--) {
+                    group = stage.get(".group")[i];
+                    var gPoly = group.get(".poly")[0];
+                    if (gPoly.attrs.fill === pSelColour) {
+                        layer = group.getLayer();
+                        layer.remove(group);
+                        stage.remove(layer);
+                        break;
+                    }
+                }
+            } else {
+                group = poly.getParent();
+                layer = group.getLayer();
+                layer.remove(group);
+                stage.remove(layer);
+            }
+        }
+        
+        function addPoint(e) {
+            var point = stage.getUserPosition(e);
+            var nearestPoints = findNearestPoints(point);
+            var group = nearestPoints[0].getParent();
+            var poly = group.get(".poly")[0];
+            var i0 = group.attrs.anchors.indexOf(nearestPoints[0]);
+            var i1 = group.attrs.anchors.indexOf(nearestPoints[1]);
+            var highPos = Math.max(i0, i1);
+            point.x -= group.getX();
+            point.y -= group.getY();
+            if (Math.abs(i0 - i1) > 1) {
+                poly.attrs.points.push(point);
+            } else {
+                poly.attrs.points.splice(highPos, 0, point);
+            }
+            var newPoly = addPoly(poly.getPoints(), group.getX(), group.getY());
+            removePoly(poly);
+            selectPoly(newPoly);
+        }
+        
+        function deselectPoints() {
+            var a;
+            for (a in selectedPoints) {
+                if (selectedPoints[a] !== undefined) {
+                    var anchor = selectedPoints[a];
+                    anchor.attrs.fill = '#ddd';
+                    anchor.getLayer().draw();
+                }
+            }
+            selectedPoints = [];
+        }
+        
+        function addPoly(points, x, y, sel) {
+            
+            //Default poly
+            if (!points) {
+                points = [0,                   0,
+                          imageObj.width / 20, 0,
+                          imageObj.width / 20, imageObj.height / 40,
+                          0,                   imageObj.height / 40];
+            } else if (points[0] instanceof Object) {
+                points = flattenPoints(points);
+            }
+            if (!x) {
+                x = margin;
+            }
+            if (!y) {
+                y = margin;
+                var canvas = document.getElementById("image-preview");
+                if (($(window).scrollTop() - 40) > canvas.offsetTop) {
+                    y += ($(window).scrollTop() - 40) - canvas.offsetTop;
+                }
+            }
+            //Find maxima and minima
+            var minX = points[0];
+            var minY = points[1];
+            var maxX = 0;
+            var maxY = 0;
+            var i;
+            for (i = 2; (i + 1) < points.length; i += 2) {
+                minX = Math.min(minX, points[i]);
+                minY = Math.min(minY, points[i + 1]);
+                maxX = Math.max(maxX, points[i]);
+                maxY = Math.max(maxY, points[i + 1]);
+            }
+            //Group containing polygon and points
+            var group = new Kinetic.Group({
+                x: x,
+                y: y,
+                draggable: true,
+                name: "group",
+                dragBoundFunc: function(pos) {
+                    var newX = pos.x < (margin - minX) ? (margin - minX) : pos.x;
+                    newX = newX > (margin + imageObj.width) ? (margin + imageObj.width) : newX;
+                    var newY = pos.y < (margin + imageObj.width - maxX) ? (margin + imageObj.width - maxX) : pos.y;
+                    newY = newY > (margin + imageObj.height - maxY) ? (margin + imageObj.height - maxY) : newY;
+                    return {
+                        x: newX,
+                        y: newY
+                    };
+                },
+                anchors: []
+            });
+            var layer = new Kinetic.Layer();
+            layer.add(group);
+            stage.add(layer);
+
+            var poly = new Kinetic.Polygon({
+                points: points,
+                fill: sel ? pSelColour : pDefColour,
+                stroke: 'black',
+                strokeWidth: 2,
+                opacity: 0.2,
+                name: "poly"
+            });
+            group.add(poly);
+            var p;
+            for (p in poly.getPoints()) {
+                if (poly.getPoints()[p] !== undefined) {
+                    var point = poly.getPoints()[p];
+                    addAnchor(group, point.x, point.y);
+                }
+            }
+            group.on("dragstart", function() {
+                this.moveToTop();
+            });
+        
+            group.on("mousedown touchstart", function(e) {
+                selectPoly(poly);
+                if(e.shiftKey) {
+                    addPoint(e);
+                }
+            });
+        
+            poly.on("mousedown", function() {
+                deselectPoints();
+            });
+        
+            layer.draw();
+            return poly;
+        }
+        
+        function findContainedPoints(box) {
+            var tLX = 0;
+            var tLY = 0;
+            var bRX = 0;
+            var bRY = 0;
+            if (box.getWidth() > 0) {
+                tLX = box.getX() - margin;
+                bRX = tLX + box.getWidth();
+            } else {
+                tLX = box.getX() + box.getWidth() - margin;
+                bRX = tLX - box.getWidth();
+            }
+            if (box.getHeight() > 0) {
+                tLY = box.getY() - margin;
+                bRY = tLY + box.getHeight();
+            } else {
+                tLY = box.getY() + box.getHeight() - margin;
+                bRY = tLY - box.getHeight();
+            }
+        
+            var sPoints = [];
+            var g;
+            for (g in stage.get(".group")) {
+                if (stage.get(".group")[g] !== undefined) {
+                    var group = stage.get(".group")[g];
+                    var a;
+                    for (a in group.attrs.anchors) {
+                        if (group.attrs.anchors[a] !== undefined) {
+                            var anchor = group.attrs.anchors[a];
+                            var adjX = anchor.getX() + group.getX() - margin;
+                            var adjY = anchor.getY() + group.getY() - margin;
+                            if (adjX >= tLX && adjY >= tLY
+                                && adjX <= bRX && adjY <= bRY) {
+                                sPoints.push(anchor);
+                            }
+                        }
+                    }
+                }
+            }
+            return sPoints;
+        }
+        
+        function polyToRect(points) {
+            if (points[0] instanceof Object) {
+                points = flattenPoints(points);
+            }
+            var nPoints = [];
+            nPoints[0] = points[0];
+            nPoints[1] = points[1];
+            var i;
+            for (i = 2; i < 8; i++) {
+                nPoints[i] = 0;
+            }
+            for (i = 2; (i + 1) < points.length; i += 2) {
+                nPoints[0] = Math.min(nPoints[0], points[i]);
+                nPoints[1] = Math.min(nPoints[1], points[i + 1]);
+                nPoints[4] = Math.max(nPoints[4], points[i]);
+                nPoints[5] = Math.max(nPoints[5], points[i + 1]);
+            }
+            nPoints[1] -= polyPadding;
+            nPoints[5] += polyPadding;
+            nPoints[2] = nPoints[4];
+            nPoints[3] = nPoints[1];
+            nPoints[6] = nPoints[0];
+            nPoints[7] = nPoints[5];
+            return nPoints;
+        }
     
-    for (var i = stage.get(".staff").length - 1; i >= 0; i--) {
-        var group = stage.get(".staff")[i];
-        var layer = group.getLayer();
-        var poly = group.get(".poly")[0];
-        if (poly.attrs.fill == defSelColour) {
-            var pLen = poly.attrs.points.length;
-            var fPI = (pLen / 2) - 1;
-            var lPI = pLen / 2;
-            var fP = poly.attrs.points[fPI];
-            var lP = poly.attrs.points[lPI];
-            var maxX = Math.max(fP.x, lP.x);
-            
-            var newPoints = new Array();
-            
-            for (var j in poly.attrs.points) {
-                var point = poly.attrs.points[j];
-                if (j == fPI) {
-                    newPoints.push(maxX);
-                    newPoints.push(point.y);
-                    newPoints.push(maxX + rX);
-                    newPoints.push(point.y);
-                } else if (j == lPI) {
-                    newPoints.push(maxX + rX);
-                    newPoints.push(point.y);
-                    newPoints.push(maxX);
-                    newPoints.push(point.y);
+        function makeRect(points) {
+            var nPoints;
+            if (!points) {
+                var i;
+                for (i = stage.get(".group").length - 1; i >= 0; i--) {
+                    var group = stage.get(".group")[i];
+                    var poly = group.get(".poly")[0];
+                    if (poly.attrs.fill === pSelColour) {
+                        nPoints = polyToRect(poly.attrs.points);
+                        addPoly(nPoints, group.getX(), group.getY());
+                        var layer = group.getLayer();
+                        layer.remove(group);
+                        stage.remove(layer);
+                        break;
+                    }
+                }
+            } else {
+                nPoints = polyToRect(points);
+                addPoly(nPoints);
+            }
+        }
+    
+        imageObj.onload = function () {
+            // Scaling factors and page margins
+            var oWidth = $("#width").text();
+            scaleVal = imageObj.width / oWidth;
+            margin = imageObj.width * marginWidth;
+        
+            stage = new Kinetic.Stage({
+                container: "image-preview",
+                width: imageObj.width + (margin * 2),
+                height: imageObj.height + (margin * 2),
+                margin: margin
+            });
+            var layer = new Kinetic.Layer();
+            var image = new Kinetic.Image({
+                x: margin,
+                y: margin,
+                width: imageObj.width,
+                height: imageObj.height,
+                image: imageObj,
+                stroke: 'black',
+                strokewidth: 2
+            });
+
+            layer.add(image);
+            stage.add(layer);
+        
+            image.on("mousedown touchstart", function(e) {
+                selectPoly();
+                if(e.shiftKey) {
+                    addPoint(e);
                 } else {
-                    newPoints.push(point.x);
-                    newPoints.push(point.y);
+                    deselectPoints();
+                    // CREATE DRAG BOX
+                    var boxStart = stage.getUserPosition(e);
+                    selectionBox = new Kinetic.Rect({
+                        x: boxStart.x,
+                        y: boxStart.y,
+                        width: 0,
+                        height: 0,
+                        fill: 'yellow',
+                        opacity: 0.2,
+                        stroke: 'black',
+                        strokewidth: 3,
+                        visible: false
+                    });
+                    var layer = new Kinetic.Layer();
+                    layer.add(selectionBox);
+                    stage.add(layer);
+                    layer.draw();
+                    var dStage = stage.getDOM();
+                    var bodyDOM = document.getElementsByTagName("body")[0];
+                    var moveListener = function(e) {
+                        if (selectionBox !== null) {
+                            var point = stage.getUserPosition(e);
+                            if (!selectionBox.isVisible()) {
+                                selectionBox.attrs.visible = true;
+                            }
+                            var dX = point.x - selectionBox.getX();
+                            var dY = point.y - selectionBox.getY();
+                            selectionBox.setAttrs({
+                                width: dX,
+                                height: dY
+                            });
+                            selectionBox.getLayer().draw();
+                        }
+                    };
+                    var upListener = function() {
+                        if (selectionBox !== null) {
+                            selectAnchors(findContainedPoints(selectionBox));
+                        
+                            layer = selectionBox.getLayer();
+                            layer.remove(selectionBox);
+                            layer.draw();
+                            stage.remove(layer);
+                            selectionBox = null;
+                            bodyDOM.removeEventListener("mouseup", upListener);
+                        }
+                    };
+                    dStage.addEventListener("mousemove", moveListener, true);
+                    bodyDOM.addEventListener("mouseup", upListener, true);
+                }
+            });
+            var sPoints = JSON.parse($("#JSON").text());
+            var polys = [];
+            var i, j;
+            for (i = 0; i < sPoints.length; i++) {
+                polys[i] = [];
+                for (j = 0; j < sPoints[i].length; j++) {
+                    polys[i].push(sPoints[i][j][0] * scaleVal);
+                    polys[i].push(sPoints[i][j][1] * scaleVal);
+                }
+                makeRect(polys[i]);
+            }
+        };
+        imageObj.src = "/static/images/multiple_sectionsI.jpg";
+    
+        function deletePoints() {
+            var changedPolys = [];
+            var s, p, poly, group;
+            for (s in selectedPoints) {
+                if (selectedPoints[s] !== undefined) {
+                    var sPoint = selectedPoints[s];
+                    group = sPoint.getParent();
+                    poly = group.get(".poly")[0];
+                    if (changedPolys.indexOf(poly) === -1) {
+                        changedPolys.push(poly);
+                    }
+                    var pI = group.attrs.anchors.indexOf(sPoint);
+                    group.attrs.anchors.splice(pI, 1);
+                    poly.attrs.points.splice(pI, 1);
                 }
             }
-            
-            var nX = group.attrs.x;
-            var nY = group.attrs.y;
-            
-            layer.remove(group);
-            stage.remove(layer);
-            addPoly(newPoints, nX, nY, true);
-            
-            break;
-        }
-    }
-    logPolys();
-}
-
-removeLeftEnd = function() {
-    for (var i = stage.get(".staff").length - 1; i >= 0; i--) {
-        var group = stage.get(".staff")[i];
-        var layer = group.getLayer();
-        var poly = group.get(".poly")[0];
-        if (poly.attrs.fill == defSelColour && poly.attrs.points.length > 4) {
-            var pLen = poly.attrs.points.length;
-            
-            var newPoints = new Array();
-            for (var j = 1; j < (pLen - 1); j++) {
-                var point = poly.attrs.points[j];
-                newPoints.push(point.x);
-                newPoints.push(point.y);
-            }
-            
-            var nX = group.attrs.x;
-            var nY = group.attrs.y;
-            
-            layer.remove(group);
-            stage.remove(layer);
-            addPoly(newPoints, nX, nY, true);
-            
-            break;
-        }
-    }
-    logPolys();
-}
-
-removeRightEnd = function() {
-    for (var i = stage.get(".staff").length - 1; i >= 0; i--) {
-        var group = stage.get(".staff")[i];
-        var layer = group.getLayer();
-        var poly = group.get(".poly")[0];
-        if (poly.attrs.fill == defSelColour && poly.attrs.points.length > 4) {
-            var pLen = poly.attrs.points.length;
-            var fPI = (pLen / 2) - 1;
-            var lPI = pLen / 2;
-            
-            var newPoints = new Array();
-            for (var j = 0; j < pLen; j++) {
-                var point = poly.attrs.points[j];
-                if (j != fPI && j != lPI) {
-                    newPoints.push(point.x);
-                    newPoints.push(point.y);
+            for (p in changedPolys) {
+                if (changedPolys[p] !== undefined) {
+                    poly = changedPolys[p];
+                    group = poly.getParent();
+                    if (poly.getPoints().length > 1) {
+                        addPoly(poly.getPoints(), group.getX(), group.getY());
+                    }
+                    removePoly(poly);
                 }
             }
-            
-            var nX = group.attrs.x;
-            var nY = group.attrs.y;
-            
-            layer.remove(group);
-            stage.remove(layer);
-            addPoly(newPoints, nX, nY, true);
-            
-            break;
         }
-    }
-    logPolys();
-}
-
-resetColours = function(colour) {
-    if (!colour) {
-        colour = defColour;
-    }
-    for (var i = stage.get(".poly").length - 1; i >= 0; i--) {
-        var poly = stage.get(".poly")[i];
-        poly.attrs.fill = colour;
-        poly.getLayer().draw();
-    }
-}
-
-removePoly = function() {
-    for (var i = stage.get(".staff").length - 1; i >= 0; i--) {
-        var group = stage.get(".staff")[i];
-        var poly = group.get(".poly")[0];
-        if (poly.attrs.fill == defSelColour) {
-            layer = group.getLayer();
-            layer.remove(group);
-            stage.remove(layer);
-        }
-    }
-    logPolys(); 
-}
-
-logPolys = function() {
-    var staves = stage.get(".staff");
-    var oCoords = new Array(staves.length);
-    for (var i = staves.length - 1; i >= 0; i--) {
-        var group = staves[i];
-        var poly = group.get(".poly")[0];
-        oCoords[i] = new Array(poly.attrs.points.length);
-        for (var j in poly.attrs.points) {
-            oCoords[i][j] = new Array(2);
-            var point = poly.attrs.points[j];
-            oCoords[i][j][0] = Math.round((point.x + group.attrs.x) / scaleVal);
-            oCoords[i][j][1] = Math.round((point.y + group.attrs.y) / scaleVal);
-        }
-    }
-    $('input[name="JSON"]').attr("value", (JSON.stringify(oCoords)));
-}
-
-maskImage = function() {
-    for (var i = stage.get(".box").length - 1; i >= 0; i--) {
-        var box = stage.get(".box")[i];
-        if (box.get(".rect").length > 0) {
-            var rect = box.get(".rect")[0];
-            var x1 = box.attrs.x;
-            var y1 = box.attrs.y;
-            var x2 = box.attrs.x + rect.attrs.width;
-            var y2 = box.attrs.y + rect.attrs.height;
-            
-        }
-    }
-}
+    
+        $("#addPoly").bind('click', function() {addPoly();});
+        $("#removePoly").bind('click', function() {removePoly();});
+        $('body').keydown(function(e) {
+            if (e.which === 8 || e.which === 46) {
+                e.preventDefault();
+                if (selectedPoints.length === 0) {
+                    removePoly();
+                } else {
+                    deletePoints();
+                }
+            }
+        });
+    
+    
+        $('#form').submit(function () {
+            $('#JSON-input').val(function() {
+                var staves = stage.get(".group");
+                var oCoords = [];
+                var i, j;
+                for (i = staves.length - 1; i >= 0; i--) {
+                    var group = staves[i];
+                    var poly = group.get(".poly")[0];
+                    oCoords[i] = [];
+                    for (j in poly.attrs.points) {
+                        if (poly.attrs.points[j] !== undefined) {
+                            oCoords[i][j] = [];
+                            var point = poly.attrs.points[j];
+                            oCoords[i][j][0] = Math.round((point.x + group.getX() - margin) / scaleVal);
+                            oCoords[i][j][1] = Math.round((point.y + group.getY() - margin) / scaleVal);
+                        }
+                    }
+                }
+                return JSON.stringify(oCoords);
+            });
+        });
+    });
+})(jQuery)
