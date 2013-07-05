@@ -28,7 +28,6 @@ pip-log.txt
 
 *.pyc
 *.swp
-*.jpg
 *.png
 *.tif
 *.tiff
