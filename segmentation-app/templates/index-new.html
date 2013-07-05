@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script src="static/js/kinetic.js"></script>
+        <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/kineticjs/4.3.1/kinetic.min.js"></script> -->
+        <script src="static/js/segment-new.js"></script>
+    </head>
+    <body>
+        <div id="segment-view">
+        </div>
+    </body>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var polyPoints = [[[744, 571], [1599, 577], [1597, 760], [742, 756]], [[1378, 585], [3441, 607], [3439, 786], [1376, 767]], [[729, 949], [2947, 972], [2946, 1152], [728, 1135]], [[727, 1349], [3440, 1364], [3438, 1549], [725, 1530]], [[733, 1741], [3436, 1758], [3434, 1944], [731, 1927]], [[694, 2111], [2388, 2127], [2387, 2314], [693, 2300]], [[2511, 2130], [3424, 2133], [3423, 2319], [2510, 2315]], [[691, 2501], [3409, 2532], [3407, 2714], [690, 2690]], [[710, 2898], [3393, 2913], [3392, 3100], [709, 3086]], [[686, 3290], [3380, 3305], [3379, 3490], [686, 3479]], [[690, 3679], [3386, 3693], [3385, 3880], [689, 3867]], [[694, 4071], [3391, 4070], [3392, 4254], [694, 4258]], [[694, 4460], [3390, 4462], [3390, 4648], [693, 4647]], [[684, 4877], [3362, 4873], [3363, 5054], [684, 5060]]];
+
+            $("#segment-view").segment({
+                image: "/static/images/testim-new.jpg",
+                polyPoints: polyPoints,
+                originalWidth: 4414,
+                originalHeight: 6993
+            });
+            var rks = $("#segment-view").data('segment');
+
+            rks.getPolyPoints();
+        });
+    </script>
+</html>
