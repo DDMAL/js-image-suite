@@ -153,7 +153,7 @@ var _getIndiciesOfNeighbourAnchorsForNewAnchorInside = function(aGroupAnchors, a
         }
         else if (bestResult.isInPlane && currentResult.isInPlane)
         {
-            bestIndex = bestResult.distanceToPlane <= currentResult.distanceToPlane ? bestIndex : i;
+            bestIndex = bestResult.distanceToLineSegment <= currentResult.distanceToLineSegment ? bestIndex : i;
         }
     }
     return [bestIndex, (bestIndex + 1) % numberOfPoints];
