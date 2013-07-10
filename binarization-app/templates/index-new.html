@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="  stylesheet" type="text/css" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+
+        <script src="static/js/kinetic.js"></script>
+        <script src="static/js/RKBinarise.js"></script>
+    </head>
+    <body>
+        <div id="slider"></div>
+
+        <div id="binarise-view"></div>
+    </body>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("#thresh-value").val("127");
+
+            $("#binarise-view").RKBinarise({
+                fullImage: "/static/images/sheet-music.jpg",
+                previewImage: "/static/images/sheet-music-small.jpg",
+                originalWidth: 4414
+            });
+            var bin = $("#binarise-view").data("RKBinarise");
+            console.log(bin.getFullImageCanvas())
+            // $("#do-binarise").on("click", function() {
+            //     var threshValue = $("#thresh-value").val(),
+            //         canvas = bin.getFullImageCanvas();
+
+            //     console.log(threshValue);
+            //     bin.threshold(parseInt(threshValue, 10), canvas);
+            // });
+
+            $("#slider").slider({
+                animate: true,
+                min: 0,
+                max: 255,
+                orientation: "horizontal",
+                step: 1,
+                value: 127,
+                range: false,
+                slide: function (event, ui) {
+                    var thresh = ui.value;
+                    bin.threshold(thresh, bin.getFullImageObject(), bin.getFullImageCanvas());
+                }
+            });
+        });
+    </script>
+</html>

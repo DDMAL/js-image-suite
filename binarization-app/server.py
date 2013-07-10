@@ -24,7 +24,7 @@ class RootHandler(tornado.web.RequestHandler):
         Handles image uploading.
     """
     def get(self):
-        self.render("templates/index.html")
+        self.render("templates/index-new.html")
 
     def post(self):
         self.write("DON'T SEND POST REQUESTS!\n")
