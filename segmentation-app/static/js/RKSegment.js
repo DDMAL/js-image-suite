@@ -353,13 +353,14 @@
                     poly = group.get(".poly")[0],
                     anchorIdx = group.attrs.anchors.indexOf(settings.selectedAnchor);
 
-                console.log(anchorIdx);
                 var rem = group.attrs.anchors.splice(anchorIdx, 1),
                     remp = poly.attrs.points.splice(anchorIdx, 1);
 
                 _deselectAnchor();
                 settings.selectedAnchor = null;
 
+                rem[0].remove();
+                group.getLayer().clear();
                 group.getLayer().draw();
             }
         }
