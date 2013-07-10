@@ -9,6 +9,7 @@
     </head>
     <body>
         <button id="new-poly">New Polygon</button>
+        <button id="submit">Submit</button>
         <div id="segment-view">
         </div>
     </body>
@@ -27,6 +28,12 @@
             $("#new-poly").on('click', function(event) {
                 rks.createPolygon();
             });
+
+            $("#submit").on('click', function(event) {
+                var points = rks.getPolyPoints();
+                console.log("Do something with poly points");
+                console.log(points);
+            })
         });
     </script>
 </html>
