@@ -11,8 +11,6 @@
         var settings = $.extend({}, defaults, options);
 
         var globals = {
-            kStage: null,
-            kImageLayer: null,
             kImage: null,
             fullImageObject: null,
             fullImageCanvas: null,

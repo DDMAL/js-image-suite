@@ -5,7 +5,6 @@
         <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
         <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 
-        <script src="static/js/kinetic.js"></script>
         <script src="static/js/RKBinarise.js"></script>
     </head>
     <body>
@@ -18,9 +17,7 @@
             $("#thresh-value").val("127");
 
             $("#binarise-view").RKBinarise({
-                fullImage: "/static/images/sheet-music.jpg",
-                previewImage: "/static/images/sheet-music-small.jpg",
-                originalWidth: 4414
+                fullImage: "/static/images/sheet-music.jpg"
             });
             var bin = $("#binarise-view").data("RKBinarise");
 
