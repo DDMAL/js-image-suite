@@ -23,14 +23,6 @@
                 originalWidth: 4414
             });
             var bin = $("#binarise-view").data("RKBinarise");
-            console.log(bin.getFullImageCanvas())
-            // $("#do-binarise").on("click", function() {
-            //     var threshValue = $("#thresh-value").val(),
-            //         canvas = bin.getFullImageCanvas();
-
-            //     console.log(threshValue);
-            //     bin.threshold(parseInt(threshValue, 10), canvas);
-            // });
 
             $("#slider").slider({
                 animate: true,
@@ -43,6 +35,8 @@
                 slide: function (event, ui) {
                     var thresh = ui.value;
                     bin.threshold(thresh, bin.getFullImageObject(), bin.getFullImageCanvas());
+
+                    console.log(bin.getThresholdValue());
                 }
             });
         });
