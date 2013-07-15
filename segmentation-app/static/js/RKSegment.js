@@ -32,23 +32,37 @@
         {
             $('body').keydown(function(event)
             {
-                // handle delete events
-                if (event.which === 8 || event.which === 46)
+                // handle events: delete (8, 46, 68), transform (82), new polygon (78)
+                if (event.which === 8 || event.which === 46 || event.which === 68)
                 {
                     event.preventDefault();
 
                     if (settings.selectedPoly && settings.selectedAnchor === null)
                     {
                         _deletePoly(settings.selectedPoly);
-                        return false;
                     }
                     else if (settings.selectedAnchor !== null)
                     {
                         _deleteAnchor();
-                        return false;
                     }
-                    else
-                        return false;
+                    return false;
+                }
+                else if (event.which === 82)
+                {
+                    event.preventDefault();
+                    if (settings.selectedPoly)
+                    {
+                        _transformPolygonToRectagle(settings.selectedPoly);
+                    }
+                    return false;
+                }
+                else if (event.which === 78)
+                {
+                    event.preventDefault();
+                    if (!settings.selectedPoly)
+                    {
+                        self.createPolygon();
+                    }
                 }
             });
 
@@ -81,14 +95,28 @@
                 while (i--)
                 {
                     var polys = [],
-                        j = settings.polyPoints[i].length;
+                        numberOfPoints = settings.polyPoints[i].length;
 
-                    while (j--)
+                    // Make sure we reduce to a rectangle
+                    var xMinimum = settings.polyPoints[i][0][0] * settings.scalingFactor,
+                        xMaximum = settings.polyPoints[i][0][0] * settings.scalingFactor,
+                        yMinimum = settings.polyPoints[i][0][1] * settings.scalingFactor,
+                        yMaximum = settings.polyPoints[i][0][1] * settings.scalingFactor;
+                    for (var j = 0; j < numberOfPoints; j++)
                     {
                         var x = settings.polyPoints[i][j][0] * settings.scalingFactor,
                             y = settings.polyPoints[i][j][1] * settings.scalingFactor;
-                        polys.push([x, y]);
+                        xMinimum = x < xMinimum ? x : xMinimum;
+                        xMaximum = x > xMaximum ? x : xMaximum;
+                        yMinimum = y < yMinimum ? y : yMinimum;
+                        yMaximum = y > yMaximum ? y : yMaximum;
                     }
+
+                    // Add rect. points.
+                    polys.push([xMinimum, yMaximum]);
+                    polys.push([xMaximum, yMaximum]);
+                    polys.push([xMaximum, yMinimum]);
+                    polys.push([xMinimum, yMinimum]);
 
                     var group = _createGroup(),
                         layer = new Kinetic.Layer(),
@@ -147,7 +175,7 @@
             }, false);
 
             return layer;
-        }
+        };
 
         var _dragBoundFunc = function(pos)
         {
@@ -224,6 +252,7 @@
 
                     return false;
                 }
+
             }, false);
 
             var j = 0,
@@ -340,7 +369,7 @@
                 settings.selectedAnchor.getLayer().draw();
                 settings.selectedAnchor = null;
             }
-        }
+        };
 
         /*
             Deletes the currently selected anchor.
@@ -363,7 +392,7 @@
                 group.getLayer().clear();
                 group.getLayer().draw();
             }
-        }
+        };
 
         /**
          * This contains a collection of geometrical functions intended to help Kinetic.
@@ -448,7 +477,7 @@
 
         /**
          * Given a group and a point, returns the indecies that should neighbour the new anchor.
-         * This is meant for a hit outside of the polygon.
+         * aPosition is either "inside" the polygon or "outside".
          */
         var _getIndicesOfNeighbourAnchorsForNewAnchor = function(aGroupAnchors, aPoint, aPosition)
         {
@@ -482,7 +511,7 @@
                         bestIndex = bestResult.distanceToLineSegment <= currentResult.distanceToLineSegment ? bestIndex : i;
                     else
                         bestIndex = bestResult.distanceToLineSegment <= currentResult.distanceToLineSegment ? bestIndex : i;
-                } 
+                }
                 else if (aPosition === "inside")
                 {
                     if (!bestResult.isInPlane && currentResult.isInPlane)
@@ -493,6 +522,43 @@
             }
 
             return [bestIndex, (bestIndex + 1) % numberOfPoints];
+        };
+
+        var _transformPolygonToRectagle = function(aPolygon)
+        {
+            if(aPolygon === null)
+            {
+                return;
+            }
+
+            var group = aPolygon.parent,
+                groupAnchors = group.attrs.anchors;
+            if(groupAnchors.length <= 4)
+            {
+                return;
+            }
+
+            _deselectAnchor();
+            _deselectPoly(aPolygon);
+
+            // Get boundries.
+            var xMinimum = groupAnchors[0].getAbsolutePosition().x,
+                xMaximum = groupAnchors[0].getAbsolutePosition().x,
+                yMinimum = groupAnchors[0].getAbsolutePosition().y,
+                yMaximum = groupAnchors[0].getAbsolutePosition().y;
+            for (var i = 1; i < groupAnchors.length; i++)
+            {
+                var point = groupAnchors[i].getAbsolutePosition();
+                xMinimum = point.x < xMinimum ? point.x : xMinimum;
+                xMaximum = point.x > xMaximum ? point.x : xMaximum;
+                yMinimum = point.y < yMinimum ? point.y : yMinimum;
+                yMaximum = point.y > yMaximum ? point.y : yMaximum;
+            }
+
+            // Make new poly.
+            var points = [[xMinimum, yMaximum], [xMaximum, yMaximum], [xMaximum, yMinimum], [xMinimum, yMinimum]];
+            _deletePoly(aPolygon);
+            self.createPolygon(points);
         };
 
         // PUBLIC METHODS \\
