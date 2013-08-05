@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="  stylesheet" type="text/css" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+        <script src="static/js/jquery.knob.js"></script>
+        <script src="static/js/RKRotate.js"></script>
+    </head>
+    <body>
+        <h1>Rotate</h1>
+        <input class="knob" id="rotateKnob" data-cursor=true data-thickness=".3"></input>
+        <div class="buttons">
+            <button id="submit">Submit</button>
+        </div>
+        <div id="rotateView"></div>
+    </body>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("#rotateView").RKRotate({
+                imageUrl: "/static/images/sheet-music.jpg",
+            });
+
+            var rkRotate = $("#rotateView").data("RKRotate");
+
+            var precisionScalar = 40;
+
+            $(".knob").knob({
+                'value': 0,
+                'width': 100,
+                'height': 100,
+                'displayPrevious': true,
+                'displayInput': false,
+                'min': 0,
+                'max': 360 * precisionScalar,
+                // 'step': 0.05,  
+                'change':function(v, ipt) {
+                    rkRotate.rotate(v/precisionScalar);
+                }
+            });
+
+            $("#submit").on('click', function() {
+                // Using rkRotate to getCurrentAngle:
+                // var rkRotate = $("#rotateView").data("RKRotate");
+                // $.ajax("/interactive/rotate", {angle: rkRotate.getCurrentAngle()});  // Send a float.
+
+                // Better to use the knob:
+                var knob = $("#rotateKnob");
+                // $.ajax("/interactive/rotate", {angle: knob.val() / precisionScalar})
+                $.ajax("/interactive/rotate", {
+                    type: 'POST', 
+                    dataType: 'json', 
+                    data: {angle: knob.val() / precisionScalar}
+                })
+            })
+        });
+    </script>
+</html>
