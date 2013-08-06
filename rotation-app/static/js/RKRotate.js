@@ -9,8 +9,9 @@
         var settings = $.extend({}, defaults, options);
 
         var instanceVariables = {
-            canvasObject: null,
             imageObject:  null,
+            canvasObject: null,
+            gridObject:   null,
             currentAngle: null
         };
 
@@ -21,20 +22,13 @@
         var init = function()
         {
             settings.canvasObject = document.createElement('canvas');
-            settings.parentObject.appendChild(settings.canvasObject);
+            settings.rkRotateElement.appendChild(settings.canvasObject);
             settings.imageObject = new Image();
 
             settings.imageObject.onload = function ()
             {
-                var context = settings.canvasObject.getContext('2d'),
-                    canvas = settings.canvasObject,
-                    w = settings.imageObject.width,
-                    h = settings.imageObject.height,
-                    neededSize = Math.ceil(Math.sqrt(h*h + w*w));
-
-                canvas.width = neededSize;
-                canvas.height = neededSize;
-                context.drawImage(settings.imageObject, (neededSize - w)/2, (neededSize - h)/2, w, h);
+                _setUpCanvas();
+                _setUpGrid();
             };
 
             settings.imageObject.src = settings.imageUrl;
@@ -45,14 +39,12 @@
 
         this.rotate = function (angle)
         {
-            // Rotate image by 'angle' degrees from the original orientation
-
             var canvas = this.getCanvas(),
                 context = canvas.getContext('2d'),
                 image = this.getImage();
 
             context.save();
-            context.clearRect(0,0,canvas.width, canvas.height);
+            context.clearRect(0, 0, canvas.width, canvas.height);
             context.translate(canvas.width / 2, canvas.height / 2);
             context.rotate(angle * Math.PI / 180);
             context.translate(-canvas.width / 2, -canvas.height / 2);
@@ -62,10 +54,23 @@
             this.setCurrentAngle(angle);
         };
 
+        this.getImage = function ()
+        {
+            return settings.imageObject;
+        };
+
+        this.getCanvas = function ()
+        {
+            return settings.canvasObject;
+        };
+
+        this.getRkRotateElement = function ()
+        {
+            return settings.rkRotateElement;
+        };
 
         this.getCurrentAngle = function ()
         {
-            console.log("getCurrentAngle returning " + settings.currentAngle);
             return settings.currentAngle;
         };
 
@@ -74,16 +79,76 @@
             settings.currentAngle = angle;
         };
 
-        this.getCanvas = function ()
+        this.getGrid = function ()
         {
-            return settings.canvasObject;
+            return settings.gridObject;
         };
 
-        this.getImage = function ()
+        this.showGrid = function ()
         {
-            return settings.imageObject;
+            $(this.getGrid()).fadeIn(1500);
         };
 
+        this.hideGrid = function ()
+        {
+            $(this.getGrid()).fadeOut(1500);
+        };
+
+        var _setUpCanvas = function()
+        {
+            var context = settings.canvasObject.getContext('2d'),
+                canvas = settings.canvasObject,
+                w = settings.imageObject.width,
+                h = settings.imageObject.height,
+                neededSize = Math.ceil(Math.sqrt(h*h + w*w)),
+                rkRotateElement = settings.rkRotateElement;
+
+            rkRotateElement.style.position = 'relative';
+            rkRotateElement.style.height = neededSize.toString() + 'px';
+            rkRotateElement.style.width  = neededSize.toString() + 'px';
+            canvas.height = neededSize;
+            canvas.width  = neededSize;
+            canvas.style.zIndex = 1;
+            context.drawImage(settings.imageObject, (neededSize - w)/2, (neededSize - h)/2, w, h);
+        };
+
+        var _setUpGrid = function()
+        {
+            var gridObject = settings.gridObject,
+                canvasSize = settings.canvasObject.width;
+
+            gridObject = document.createElement('div');
+            gridObject.style.position = 'absolute';
+            gridObject.style.left = '0px';
+            gridObject.style.top  = '0px';
+            gridObject.style.height = canvasSize;
+            gridObject.style.width = canvasSize;
+            gridObject.style.zIndex = 2;
+
+            var gridBoxHeight = 80,
+                gridBoxWidth = 112,
+                numberOfColumns = Math.floor(canvasSize / gridBoxWidth),
+                numberOfRows = Math.floor(canvasSize / gridBoxHeight),
+                numberOfRectanglesInGrid = numberOfColumns * numberOfRows;
+
+            for(var i = 0; i < numberOfRectanglesInGrid; ++i)
+            {
+                var gridRect = document.createElement('div');
+
+                gridRect.style.float = 'left';
+                gridRect.style.height = gridBoxHeight.toString() + 'px';
+                gridRect.style.width  = gridBoxWidth.toString() + 'px';
+                gridRect.style.marginBottom = '-1px';
+                gridRect.style.marginRight  = '-1px';
+                gridRect.style.border = '1px solid rgba(0,0,150,0.1)';
+
+                gridObject.appendChild(gridRect);
+            }
+
+            $(gridObject).hide();
+            settings.gridObject = gridObject;
+            settings.rkRotateElement.appendChild(gridObject);
+        };
     };
 
     $.fn.RKRotate = function(options)
@@ -95,12 +160,12 @@
             if (element.data('RKRotate'))
                 return;
 
-            options.parentObject = element[0];
+            options.rkRotateElement = element[0];
 
             var template = new RKRotate(this, options);
-            element.data('RKRotate', template);
 
-            });
-        };
-    }
+            element.data('RKRotate', template);
+        });
+    };
+}
 )(jQuery);
