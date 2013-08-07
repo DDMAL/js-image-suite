@@ -124,34 +124,36 @@
             var gridObject = settings.gridObject,
                 canvasSize = settings.canvasObject.width;
 
-            gridObject = document.createElement('div');
+            gridObject = document.createElement('canvas');
             gridObject.style.position = 'absolute';
             gridObject.style.left = '0px';
-            gridObject.style.top  = '0px';
-            gridObject.style.height = canvasSize;
-            gridObject.style.width = canvasSize;
+            gridObject.style.top = '0px';
+            gridObject.height = canvasSize;
+            gridObject.width  = canvasSize;
             gridObject.style.zIndex = 2;
 
             var gridBoxHeight = 80,
-                gridBoxWidth = 112,
-                numberOfColumns = Math.floor(canvasSize / gridBoxWidth),
-                numberOfRows = Math.floor(canvasSize / gridBoxHeight),
-                numberOfRectanglesInGrid = numberOfColumns * numberOfRows;
+                gridBoxWidth  = 112,
+                gridContext = gridObject.getContext('2d');
 
-            for(var i = 0; i < numberOfRectanglesInGrid; ++i)
+            // The initializers of these for loops help ensure that 
+            //   - the centre of the image lies on a gridline crossing
+            //   - the lines are drawn in the centre of the pixels so that they're one pixel thick, (hence the +0.5)
+            for (var x = Math.floor(canvasSize / 2) % gridBoxWidth + 0.5; x <= canvasSize; x += gridBoxWidth)
             {
-                var gridRect = document.createElement('div');
-
-                gridRect.style.float = 'left';
-                gridRect.style.height = gridBoxHeight.toString() + 'px';
-                gridRect.style.width  = gridBoxWidth.toString() + 'px';
-                gridRect.style.marginBottom = '-1px';
-                gridRect.style.marginRight  = '-1px';
-                gridRect.style.border = '1px solid rgba(0,0,150,0.1)';
-
-                gridObject.appendChild(gridRect);
+                gridContext.moveTo(x, 0);
+                gridContext.lineTo(x, canvasSize);
             }
 
+            for (var y = Math.floor(canvasSize / 2) % gridBoxHeight + 0.5; y <= canvasSize; y += gridBoxHeight)
+            {
+                gridContext.moveTo(0, y);
+                gridContext.lineTo(canvasSize, y);
+            }
+
+            gridContext.lineWidth = 1;
+            gridContext.strokeStyle = "rgba(0, 0, 150, 0.3)";
+            gridContext.stroke();
             $(gridObject).hide();
             settings.gridObject = gridObject;
             settings.rkRotateElement.appendChild(gridObject);
