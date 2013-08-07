@@ -37,11 +37,12 @@
                 'max': 360 * precisionMultiplier,
                 // 'step': 0.05,  
                 'change':function(v, ipt) {
-                    rkRotate.rotate(v/precisionMultiplier);
+                    rkRotate.rotate(v/precisionMultiplier * Math.PI / 180);
                 }
             });
 
-            $(".knob-wrapper").mousedown(function() {
+            $(".knob-wrapper").mousedown(function() 
+            {
                 rkRotate.showGrid();
             });
 
@@ -50,7 +51,8 @@
                 rkRotate.hideGrid();
             });
 
-            $("#submit").on('click', function() {
+            $("#submit").on('click', function()
+            {
                 var knob = $("#rotateKnob");
                 $.ajax("/interactive/rotate", {
                     type: 'POST', 

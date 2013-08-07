@@ -3,7 +3,7 @@
     var RKRotate = function(element, options)
     {
         var defaults = {
-           imageUrl: null
+            imageUrl: null
         };
 
         var settings = $.extend({}, defaults, options);
@@ -17,7 +17,7 @@
 
         $.extend(settings, instanceVariables);
 
-        var self = this;
+        var self = this;  // Use self, not this, inside functions. 
 
         var init = function()
         {
@@ -29,16 +29,17 @@
             {
                 _setUpCanvas();
                 _setUpGrid();
+                _setUpRotateByDraggingTheImage();
             };
 
             settings.imageObject.src = settings.imageUrl;
             settings.currentAngle = 0;
         };
 
-        init();
-
         this.rotate = function (angle)
         {
+            // Clockwise is positive.
+
             var canvas = this.getCanvas(),
                 context = canvas.getContext('2d'),
                 image = this.getImage();
@@ -46,7 +47,7 @@
             context.save();
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.translate(canvas.width / 2, canvas.height / 2);
-            context.rotate(angle * Math.PI / 180);
+            context.rotate(angle);
             context.translate(-canvas.width / 2, -canvas.height / 2);
             context.drawImage(settings.imageObject, (canvas.width - image.width)/2, (canvas.height - image.height)/2, image.width, image.height);
             context.restore();
@@ -86,12 +87,18 @@
 
         this.showGrid = function ()
         {
-            $(this.getGrid()).fadeIn(1500);
+            var grid = this.getGrid();
+
+            $(grid).stop();
+            $(grid).fadeIn(800);
         };
 
         this.hideGrid = function ()
         {
-            $(this.getGrid()).fadeOut(1500);
+            var grid = this.getGrid();
+
+            $(grid).stop();
+            $(grid).fadeOut(800);
         };
 
         var _setUpCanvas = function()
@@ -149,6 +156,47 @@
             settings.gridObject = gridObject;
             settings.rkRotateElement.appendChild(gridObject);
         };
+
+        var _setUpRotateByDraggingTheImage = function()
+        {
+            var canvas = self.getCanvas();
+
+            $(canvas).mousedown( function()
+            {
+                // if (! self.clickedInsideImage(event))
+                //     return;
+
+                self.showGrid();
+
+                var clickLocation = {x: event.pageX, y: event.pageY},
+                    previousAngle = self.getCurrentAngle(),
+                    canvasOffset = $(canvas).offset(),
+                    centre = {x: canvasOffset.left + canvas.width / 2, y: canvasOffset.top + canvas.height / 2},
+                    clickAngle = Math.atan2(clickLocation.y - centre.y, clickLocation.x - centre.x);
+
+                $(window).mousemove( function(event)
+                {
+                    var dragAngle = Math.atan2(event.pageY - centre.y, event.pageX - centre.x);
+
+                    self.rotate(dragAngle - clickAngle + previousAngle);
+                });
+            });
+
+            var grid = self.getGrid();
+
+            $(grid).mousedown( function()
+            {
+                $(canvas).trigger('mousedown');
+            });
+
+            $(window).mouseup( function()
+            {
+                $(window).unbind("mousemove");
+                self.hideGrid();
+            });
+        };
+
+        init();
     };
 
     $.fn.RKRotate = function(options)
