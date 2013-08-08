@@ -11,32 +11,44 @@
             {
                 height: 21px;
             }
+            #currentAngleTextBox
+            {
+                width: 52px;
+                text-align: right;
+                display: inline-block;
+            }
         </style>
     </head>
     <body>
         <h1>Rotate</h1>
+        <p>
+            Use the dial, the text box, or click and drag on the image directly to choose a rotation angle.
+        </p>
         <div class="knob-wrapper">
             <input class="knob" id="rotateKnob" data-cursor=true data-thickness=".3"></input>
         </div>
-        <div id="submitControls">
-            <span id="currentAngleDisplay" />
+        <div id="submitDiv">
+            <input type='text' id="currentAngleTextBox"></input><span>&deg;</span>
             <button id="submitButton">Submit</button>
         </div>
         <!-- <div id="gridControls">
-            <button id="testSetGridBoxSize">Test</button>
+            <button id="testButton">Test</button>
         </div> -->
         <div id="rotateView"></div>
     </body>
     <script type="text/javascript">
         $(document).ready(function() {
+            var precisionMultiplier = 40;
+
             $("#rotateView").RKRotate({
                 imageUrl: "/static/images/sheet-music.jpg",
-                gridFadeTime: 800
+                gridFadeTime: 800,
+                textBoxOutput: $('#currentAngleTextBox'),
+                controlOutput: $('#rotateKnob'),
+                controlOutputMultiplier: precisionMultiplier
             });
 
             var rkRotate = $("#rotateView").data("RKRotate");
-
-            var precisionMultiplier = 40;
 
             $(".knob").knob({
                 'value': 0,
@@ -62,22 +74,38 @@
                 rkRotate.hideGrid();
             });
 
-            $("#submit").on('click', function()
+            $("#currentAngleTextBox").on('keypress', function(event)
+            {
+                var keyPressed = event.keyCode || event.which,
+                    enterKey = 13;
+
+                if (keyPressed == enterKey)
+                {
+                    rkRotate.rotate(this.value * Math.PI / 180);
+                }
+            });
+
+            $("#submitButton").on('click', function()
             {
                 var knob = $("#rotateKnob");
                 $.ajax("/interactive/rotate", {
                     type: 'POST', 
                     dataType: 'json', 
-                    data: {angle: knob.val() / precisionMultiplier}
+                    data: {angle: rkRotate.getCurrentAngle() * 180 / Math.PI}
                 });
             });
 
-            $("#testSetGridBoxSize").on('click', function()
+            $("#testButton").on('click', function()
             {
                 var swap = rkRotate.getGridBoxWidth();
+
                 rkRotate.setGridBoxWidth(rkRotate.getGridBoxHeight());
                 rkRotate.setGridBoxHeight(swap);
                 rkRotate.setGridFadeTime(200);
+                $('#rotateKnob')
+                    .val(180 * precisionMultiplier)
+                    .trigger('change');
+                $('#currentAngleTextBox').val(180);
             });
         });
     </script>

@@ -6,7 +6,11 @@
             imageUrl: null,
             gridFadeTime: 200,
             gridBoxHeight: 80,
-            gridBoxWidth: 112
+            gridBoxWidth: 112,
+            textBoxOutput: null,
+            displayPrecision: 3,
+            controlOutput: null,
+            controlOutputMultiplier: 1
         };
 
         var settings = $.extend({}, defaults, options);
@@ -15,7 +19,7 @@
             imageObject:  null,
             imageCanvas: null,
             gridObject:   null,
-            currentAngle: null
+            currentAngle: null  // radians
         };
 
         $.extend(settings, instanceVariables);
@@ -36,14 +40,14 @@
             };
 
             settings.imageObject.src = settings.imageUrl;
-            settings.currentAngle = 0;
+            _updateAngle(0);
         };
 
         this.rotate = function (angle)
         {
-            // Clockwise is positive.
+            angle = modulo(angle, 2 * Math.PI);
 
-            var canvas = this.getCanvas(),
+            var canvas = this.getImageCanvas(),
                 context = canvas.getContext('2d'),
                 image = this.getImage();
 
@@ -55,7 +59,7 @@
             context.drawImage(settings.imageObject, (canvas.width - image.width)/2, (canvas.height - image.height)/2, image.width, image.height);
             context.restore();
 
-            settings.currentAngle = angle;
+            _updateAngle(angle);
         };
 
         this.getImage = function ()
@@ -63,7 +67,7 @@
             return settings.imageObject;
         };
 
-        this.getCanvas = function ()
+        this.getImageCanvas = function ()
         {
             return settings.imageCanvas;
         };
@@ -140,24 +144,27 @@
                 neededSize = Math.ceil(Math.sqrt(h*h + w*w)),
                 rkRotateElement = settings.rkRotateElement;
 
-            rkRotateElement.style.position = 'relative';
             rkRotateElement.style.height = neededSize.toString() + 'px';
             rkRotateElement.style.width  = neededSize.toString() + 'px';
+            $(rkRotateElement).css({position: 'relative'});
+
             canvas.height = neededSize;
             canvas.width  = neededSize;
-            canvas.style.zIndex = 1;
+            $(canvas).css({'zIndex' : '1'});
             context.drawImage(settings.imageObject, (neededSize - w)/2, (neededSize - h)/2, w, h);
         };
 
         var _setUpGrid = function()
         {
             settings.gridObject = document.createElement('canvas');
-            settings.gridObject.style.position = 'absolute';
-            settings.gridObject.style.left = '0px';
-            settings.gridObject.style.top = '0px';
+            $(settings.gridObject).css({
+                'position': 'absolute',
+                'left': '0px',
+                'top': '0px',
+                'zIndex' : '2'
+            });
             settings.gridObject.height = settings.imageCanvas.height;
-            settings.gridObject.width  = settings.imageCanvas.width;
-            settings.gridObject.style.zIndex = 2;
+            settings.gridObject.width = settings.imageCanvas.width;
 
             _drawGrid();
         };
@@ -198,26 +205,28 @@
 
         var _setUpRotateByDraggingTheImage = function()
         {
-            var canvas = self.getCanvas();
+            var imageCanvas = self.getImageCanvas();
 
-            $(canvas).mousedown( function()
+            $(imageCanvas).mousedown( function()
             {
                 // if (! self.clickedInsideImage(event))
                 //     return;
 
                 self.showGrid();
+                _disableSelection();
 
                 var clickLocation = {x: event.pageX, y: event.pageY},
                     previousAngle = self.getCurrentAngle(),
-                    canvasOffset = $(canvas).offset(),
-                    centre = {x: canvasOffset.left + canvas.width / 2, y: canvasOffset.top + canvas.height / 2},
+                    canvasOffset = $(imageCanvas).offset(),
+                    centre = {x: canvasOffset.left + imageCanvas.width / 2, y: canvasOffset.top + imageCanvas.height / 2},
                     clickAngle = Math.atan2(clickLocation.y - centre.y, clickLocation.x - centre.x);
 
                 $(window).mousemove( function(event)
                 {
-                    var dragAngle = Math.atan2(event.pageY - centre.y, event.pageX - centre.x);
+                    var dragAngle = Math.atan2(event.pageY - centre.y, event.pageX - centre.x),
+                        newAngle = dragAngle - clickAngle + previousAngle;
 
-                    self.rotate(dragAngle - clickAngle + previousAngle);
+                    self.rotate(newAngle);
                 });
             });
 
@@ -225,14 +234,68 @@
 
             $(grid).mousedown( function()
             {
-                $(canvas).trigger('mousedown');
+                $(imageCanvas).trigger('mousedown');
             });
 
             $(window).mouseup( function()
             {
                 $(window).unbind("mousemove");
                 self.hideGrid();
+                _enableSelection();
             });
+        };
+
+        var _updateAngle = function (angle)
+        {
+            settings.currentAngle = angle;
+            _updateTextBoxOutput(angle);
+            _updateControlOutput(angle);
+        };
+
+        var _updateTextBoxOutput = function (angle)
+        {
+            if (settings.textBoxOutput)
+            {
+                $(settings.textBoxOutput).val((angle * 180 / Math.PI).toFixed(settings.displayPrecision));
+            }
+        };
+
+        var _updateControlOutput = function (angle)
+        {
+            if (settings.controlOutput)
+            {
+                var M = settings.controlOutputMultiplier;
+
+                settings.controlOutput.val(angle * 180 / Math.PI * M);
+                settings.controlOutput.trigger('change');
+            }
+        };
+
+        var _disableSelection = function ()
+        {
+            $('body').css({
+              '-webkit-user-select': 'none',
+              '-moz-user-select:': '-moz-none',
+              '-ms-user-select': 'none',
+              'user-select': 'none'
+          });
+        };
+
+        var _enableSelection = function ()
+        {
+            $('body').css({
+              '-webkit-user-select': '',
+              '-moz-user-select:': '',
+              '-ms-user-select': '',
+              'user-select': ''
+          });
+        };
+
+        var modulo = function (dividend, divisor)
+        {
+            // The % modulo operator is incorrect when the dividend is negative.
+            // http://javascript.about.com/od/problemsolving/a/modulobug.htm
+            return ((dividend % divisor) + divisor) % divisor;
         };
 
         init();
