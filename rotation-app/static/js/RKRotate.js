@@ -170,7 +170,8 @@
                 gridBoxWidth  = self.getGridBoxWidth(),
                 gridContext = gridObject.getContext('2d');
 
-            gridObject.width = gridObject.width;  // erases the canvas
+            gridContext.clearRect(0, 0, gridObject.width, gridObject.height);
+            gridContext.beginPath();
 
             // The initializers of these for loops help ensure that 
             //   - the centre of the image lies on a gridline crossing
