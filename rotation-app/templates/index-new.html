@@ -6,21 +6,32 @@
         <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
         <script src="static/js/jquery.knob.js"></script>
         <script src="static/js/RKRotate.js"></script>
+        <style>
+            button
+            {
+                height: 21px;
+            }
+        </style>
     </head>
     <body>
         <h1>Rotate</h1>
         <div class="knob-wrapper">
             <input class="knob" id="rotateKnob" data-cursor=true data-thickness=".3"></input>
         </div>
-        <div class="buttons">
-            <button id="submit">Submit</button>
+        <div id="submitControls">
+            <span id="currentAngleDisplay" />
+            <button id="submitButton">Submit</button>
         </div>
+        <!-- <div id="gridcontrols">
+            <button id="testsetgridboxsize">test</button>
+        </div> -->
         <div id="rotateView"></div>
     </body>
     <script type="text/javascript">
         $(document).ready(function() {
             $("#rotateView").RKRotate({
                 imageUrl: "/static/images/sheet-music.jpg",
+                gridFadeTime: 800
             });
 
             var rkRotate = $("#rotateView").data("RKRotate");
@@ -59,6 +70,14 @@
                     dataType: 'json', 
                     data: {angle: knob.val() / precisionMultiplier}
                 });
+            });
+
+            $("#testSetGridBoxSize").on('click', function()
+            {
+                var swap = rkRotate.getGridBoxWidth();
+                rkRotate.setGridBoxWidth(rkRotate.getGridBoxHeight());
+                rkRotate.setGridBoxHeight(swap);
+                rkRotate.setGridFadeTime(200);
             });
         });
     </script>

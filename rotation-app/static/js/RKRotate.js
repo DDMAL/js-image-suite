@@ -3,14 +3,17 @@
     var RKRotate = function(element, options)
     {
         var defaults = {
-            imageUrl: null
+            imageUrl: null,
+            gridFadeTime: 200,
+            gridBoxHeight: 80,
+            gridBoxWidth: 112
         };
 
         var settings = $.extend({}, defaults, options);
 
         var instanceVariables = {
             imageObject:  null,
-            canvasObject: null,
+            imageCanvas: null,
             gridObject:   null,
             currentAngle: null
         };
@@ -21,8 +24,8 @@
 
         var init = function()
         {
-            settings.canvasObject = document.createElement('canvas');
-            settings.rkRotateElement.appendChild(settings.canvasObject);
+            settings.imageCanvas = document.createElement('canvas');
+            settings.rkRotateElement.appendChild(settings.imageCanvas);
             settings.imageObject = new Image();
 
             settings.imageObject.onload = function ()
@@ -52,7 +55,7 @@
             context.drawImage(settings.imageObject, (canvas.width - image.width)/2, (canvas.height - image.height)/2, image.width, image.height);
             context.restore();
 
-            this.setCurrentAngle(angle);
+            settings.currentAngle = angle;
         };
 
         this.getImage = function ()
@@ -62,7 +65,39 @@
 
         this.getCanvas = function ()
         {
-            return settings.canvasObject;
+            return settings.imageCanvas;
+        };
+
+        this.getGridFadeTime = function ()
+        {
+            return settings.gridFadeTime;
+        };
+
+        this.setGridFadeTime = function (newGridFadeTime)
+        {
+            settings.gridFadeTime = newGridFadeTime;
+        };
+
+        this.getGridBoxWidth = function ()
+        {
+            return settings.gridBoxWidth;
+        };
+
+        this.setGridBoxWidth = function (newGridBoxWidth)
+        {
+            settings.gridBoxWidth = newGridBoxWidth;
+            _drawGrid();
+        };
+
+        this.getGridBoxHeight = function ()
+        {
+            return settings.gridBoxHeight;
+        };
+
+        this.setGridBoxHeight = function (newGridBoxHeight)
+        {
+            settings.gridBoxHeight = newGridBoxHeight;
+            _drawGrid();
         };
 
         this.getRkRotateElement = function ()
@@ -75,11 +110,6 @@
             return settings.currentAngle;
         };
 
-        this.setCurrentAngle = function (angle)
-        {
-            settings.currentAngle = angle;
-        };
-
         this.getGrid = function ()
         {
             return settings.gridObject;
@@ -90,7 +120,7 @@
             var grid = this.getGrid();
 
             $(grid).stop();
-            $(grid).fadeIn(800);
+            $(grid).fadeIn(settings.gridFadeTime);
         };
 
         this.hideGrid = function ()
@@ -98,13 +128,13 @@
             var grid = this.getGrid();
 
             $(grid).stop();
-            $(grid).fadeOut(800);
+            $(grid).fadeOut(settings.gridFadeTime);
         };
 
         var _setUpCanvas = function()
         {
-            var context = settings.canvasObject.getContext('2d'),
-                canvas = settings.canvasObject,
+            var context = settings.imageCanvas.getContext('2d'),
+                canvas = settings.imageCanvas,
                 w = settings.imageObject.width,
                 h = settings.imageObject.height,
                 neededSize = Math.ceil(Math.sqrt(h*h + w*w)),
@@ -121,20 +151,26 @@
 
         var _setUpGrid = function()
         {
+            settings.gridObject = document.createElement('canvas');
+            settings.gridObject.style.position = 'absolute';
+            settings.gridObject.style.left = '0px';
+            settings.gridObject.style.top = '0px';
+            settings.gridObject.height = settings.imageCanvas.height;
+            settings.gridObject.width  = settings.imageCanvas.width;
+            settings.gridObject.style.zIndex = 2;
+
+            _drawGrid();
+        };
+
+        var _drawGrid = function()
+        {
             var gridObject = settings.gridObject,
-                canvasSize = settings.canvasObject.width;
-
-            gridObject = document.createElement('canvas');
-            gridObject.style.position = 'absolute';
-            gridObject.style.left = '0px';
-            gridObject.style.top = '0px';
-            gridObject.height = canvasSize;
-            gridObject.width  = canvasSize;
-            gridObject.style.zIndex = 2;
-
-            var gridBoxHeight = 80,
-                gridBoxWidth  = 112,
+                canvasSize = settings.imageCanvas.width,
+                gridBoxHeight = self.getGridBoxHeight(),
+                gridBoxWidth  = self.getGridBoxWidth(),
                 gridContext = gridObject.getContext('2d');
+
+            gridObject.width = gridObject.width;  // erases the canvas
 
             // The initializers of these for loops help ensure that 
             //   - the centre of the image lies on a gridline crossing
