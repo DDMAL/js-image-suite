@@ -187,7 +187,7 @@
                     moveThumbnailBoxRelatively(e, prevX, prevY);
                     prevX = e.clientX;
                     prevY = e.clientY;
-                    binarise();  // Apparently clicking on the viewPort binarises it.
+                    binarise(settings.binariseThreshold);
                 }
             });
 
