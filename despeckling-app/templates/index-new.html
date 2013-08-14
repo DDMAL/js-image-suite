@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+        <script src="static/js/kinetic-v4.5.1.min.js"></script>
+        <script src="static/js/RKDespeckle.js"></script>
+        <style>
+        </style>
+    </head>
+    <body>
+        <h1>Despeckle</h1>
+        <div id="despeckle-slider"></div>
+        <div id="submit-div">
+            <span>Speckle Size: </span><span id="speckle-size-display"></span>
+            <button id="submit-button">Submit</button>
+        </div>
+        <!-- <button id="test-button">Test</button> -->
+        <br />
+        <div id="despeckle-view" />
+    </body>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("#despeckle-view").RKDespeckle({
+                imageUrl: "static/images/sheet-music.jpg",
+                thumbUrl: "static/images/sheet-music-small.jpg",
+                displayOutput: document.getElementById("speckle-size-display")
+            });
+
+            var rkDespeckle = $("#despeckle-view").data("RKDespeckle");
+
+            $("#despeckle-slider").slider({
+                animate: false,
+                min: 0,
+                max: 100,
+                orientation: 'horizontal',
+                step: 1,
+                value: 0,
+                range: false,
+                slide: function (event, ui) {
+                    rkDespeckle.despeckle(ui.value);
+                }
+            });
+
+            $("#submit-button").on('click', function()
+            {
+                $.ajax("/interactive/despeckle", {
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {speckle_size: rkDespeckle.getCurrentSpeckleSize()}
+                });
+            });
+
+            $("#test-button").on('click', function()
+            {
+                console.log("rkDespeckle.getCurrentSpeckleSize(): " + rkDespeckle.getCurrentSpeckleSize());
+            });
+        });
+    </script>
+</html>
