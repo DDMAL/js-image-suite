@@ -59,8 +59,8 @@
                 'min': 0,
                 'max': 360 * precisionMultiplier,
                 // 'step': 0.05,  
-                'change':function(v, ipt) {
-                    rkRotate.rotate(v/precisionMultiplier * Math.PI / 180);
+                'change': function(newValue) {
+                    rkRotate.rotate(newValue / precisionMultiplier * Math.PI / 180);
                 }
             });
 
@@ -79,7 +79,7 @@
                 var keyPressed = event.keyCode || event.which,
                     enterKey = 13;
 
-                if (keyPressed == enterKey)
+                if (keyPressed === enterKey)
                 {
                     rkRotate.rotate(this.value * Math.PI / 180);
                 }
@@ -87,7 +87,6 @@
 
             $("#submitButton").on('click', function()
             {
-                var knob = $("#rotateKnob");
                 $.ajax("/interactive/rotate", {
                     type: 'POST', 
                     dataType: 'json', 

@@ -24,7 +24,7 @@
 
         $.extend(settings, instanceVariables);
 
-        var self = this;  // Use self, not this, inside functions. 
+        var self = this;  // Use self, not this, inside private functions. 
 
         var init = function()
         {
