@@ -348,7 +348,6 @@
             if (settings.displayOutput)
             {
                 settings.displayOutput.innerHTML = size;
-                // settings.displayOutput.innerHTML = size.toString();
             }
 
             if (size > 0)
@@ -383,7 +382,7 @@
                             pixelQueue.push(p);
                             bail = false;
                             dataT[x][y] = 1;
-                            for (i = 0; (i < pixelQueue.length) && (pixelQueue.length < size); i++)
+                            for (i = 0; (i < pixelQueue.length) && (pixelQueue.length <= size); i++)
                             {
                                 center = pixelQueue[i];
 
@@ -422,7 +421,7 @@
                                     break;
                                 }
                             }
-                            if ((!bail) && (pixelQueue.length < size))
+                            if ((!bail) && (pixelQueue.length <= size))
                             {
                                 while (pixelQueue.length > 0)
                                 {
