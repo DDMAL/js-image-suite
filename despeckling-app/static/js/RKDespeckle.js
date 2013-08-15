@@ -44,7 +44,6 @@
 
             settings.imageObj.onload = function ()
             {
-                initializeImageObj();
                 settings.imageThumb.src = settings.thumbUrl;
             };
 
@@ -54,25 +53,14 @@
             };
         };
 
-        var initializeImageObj = function ()
-        {
-            var canvas = self.getViewPortCanvas();
-
-            context = canvas.getContext("2d");
-            settings.viewPortWidth += $(window).height() - (canvas.offsetTop + settings.viewPortWidth) - 10;  // This is bogus XXX
-            canvas.width = settings.viewPortWidth;
-            canvas.height = settings.viewPortWidth;
-            binarise(settings.binariseThreshold);
-        };
-
         var initializeImageThumb = function ()
         {
             settings.scaleVal = settings.imageThumb.width / settings.imageObj.width;
 
             instantiateKinetic();
 
-            window.onresize = initializeViewPort;
-            initializeViewPort();
+            window.onresize = drawViewPortAndBox;
+            drawViewPortAndBox();
 
             initializeMouseBehaviours();
         };
@@ -133,18 +121,24 @@
             settings.kineticImage = image;
         };
 
-        var initializeViewPort = function ()
+        var drawViewPortAndBox = function ()
         {
             var canvas = self.getViewPortCanvas();
-            settings.viewPortWidth += $(window).height() - (canvas.offsetTop + settings.viewPortWidth) - 10;
+            settings.viewPortWidth = $(window).height() - canvas.offsetTop - 10;
             canvas.width = settings.viewPortWidth;
             canvas.height = settings.viewPortWidth;
+
+            drawBlueViewBox();
+
+            self.despeckle(self.speckleSize);
+        };
+
+        var drawBlueViewBox = function ()
+        {
             boxWidth = settings.viewPortWidth * settings.scaleVal;
             settings.blueViewBox.setWidth(boxWidth);
             settings.blueViewBox.setHeight(boxWidth);
             settings.layerB.draw();
-
-            self.despeckle(self.speckleSize);
         };
 
         var initializeMouseBehaviours = function ()
@@ -232,8 +226,6 @@
 
                 setViewBoxPosition(nX, nY);
 
-                console.log("moveThumbnailBox mousePosition: (" + pos.x + ", " + pos.y + ") nX: " + nX + ", nY: " + nY + ", boxWidth: " + boxWidth);
-
                 binarise(settings.binariseThreshold);
             }
         };
@@ -261,7 +253,7 @@
             settings.blueViewBox.getLayer().draw();
         };
 
-        // Despeckles the image data under the blueViewBox and displays it with the viewPort
+        // Binarises the image data under the blueViewBox and displays it with the viewPort
         var binarise = function (thresh)
         {
             var rScale = 0.2989,
