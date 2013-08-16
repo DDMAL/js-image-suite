@@ -146,8 +146,10 @@
             var canvas, thumbnailMouseDown, viewportMouseDown, prevX, prevY;
 
             thumbnailMouseDown = false;
-            settings.blueViewBox.on("mousedown", function ()
+
+            settings.blueViewBox.on("mousedown", function (e)
             {
+                moveThumbnailBox(e);
                 thumbnailMouseDown = true;
             });
 
