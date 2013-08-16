@@ -220,8 +220,8 @@
             if (pos !== undefined)
             {
                 var boxWidth = settings.viewPortWidth * settings.scaleVal,
-                    nX = pos.x - Math.round(boxWidth / 2),
-                    nY = pos.y - Math.round(boxWidth / 2);
+                    nX = pos.x - boxWidth / 2,
+                    nY = pos.y - boxWidth / 2;
                     // Translates coordinates from the middle of the box (mousePos) to the top left corner of the box, where it's drawn from
 
                 setViewBoxPosition(nX, nY);
@@ -243,6 +243,8 @@
 
         var setViewBoxPosition = function (newX, newY)
         {
+            // The view box position is allowed to be non-integer
+
             newX = Math.max(newX, 0);
             newX = Math.min(newX, settings.imageThumb.width - boxWidth);
             newY = Math.max(newY, 0);
@@ -263,8 +265,8 @@
 
             if (settings.blueViewBox)
             {
-                x = settings.blueViewBox.getX() / settings.scaleVal;
-                y = settings.blueViewBox.getY() / settings.scaleVal;
+                x = Math.round(settings.blueViewBox.getX() / settings.scaleVal);
+                y = Math.round(settings.blueViewBox.getY() / settings.scaleVal);
             }
             else
             {

@@ -23,9 +23,10 @@
     <script type="text/javascript">
         $(document).ready(function() {
             $("#despeckle-view").RKDespeckle({
-                imageUrl: "static/images/sheet-music.jpg",
-                thumbUrl: "static/images/sheet-music-small.jpg",
-                displayOutput: document.getElementById("speckle-size-display")
+                imageUrl: "static/images/sheet-music.jpg",  // RGB image
+                thumbUrl: "static/images/sheet-music-small.jpg",  // Same image, smaller than the browser window
+                displayOutput: document.getElementById("speckle-size-display"),
+                binarizationThreshold: 150
             });
 
             var rkDespeckle = $("#despeckle-view").data("RKDespeckle");
