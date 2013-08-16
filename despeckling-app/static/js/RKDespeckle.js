@@ -313,10 +313,6 @@
             var BLACK = 0,
                 WHITE = 255;
 
-            var canvas, context, imageDataO, dataO, w, h, dataT, i, j, x, y, pixelQueue, convX, convY, p, bail,
-                center, cX, cY, x2i, y2i, x2Lim, y2Lim, y2, x2, convX2, convY2, p2,
-                pointO, pointT, pX, pY;
-
             if (size !== undefined)
             {
                 settings.speckleSize = size;
@@ -326,8 +322,6 @@
                 size = settings.speckleSize;
             }
 
-            canvas = self.getViewPortCanvas();
-            context = canvas.getContext("2d");
             binarise(settings.binarizationThreshold);
 
             if (settings.displayOutput)
@@ -337,59 +331,56 @@
 
             if (size > 0)
             {
-                imageDataO = context.getImageData(0, 0, canvas.width, canvas.height);
-                dataO = imageDataO.data;
+                var canvas = self.getViewPortCanvas(),
+                    context = canvas.getContext("2d"),
+                    imageDataO = context.getImageData(0, 0, canvas.width, canvas.height),
+                    dataO = imageDataO.data,
+                    w = canvas.width,
+                    h = canvas.height,
+                    dataT = make2DZeroArray(w, h),
+                    pixelQueue = [];
 
-                w = canvas.width;
-                h = canvas.height;
-
-                dataT = [];
-                for (i = 0; i < w; i++)
+                for (var y = 0; y < h; y++)
                 {
-                    dataT[i] = [];
-                    for (j = 0; j < h; j++)
+                    for (var x = 0; x < w; x++)
                     {
-                        dataT[i][j] = 0;
-                    }
-                }
+                        var convX = x * 4,
+                            convY = y * w * 4,
+                            p = convX + convY;
 
-                pixelQueue = [];
-                for (y = 0; y < h; y++)
-                {
-                    for (x = 0; x < w; x++)
-                    {
-                        convX = x * 4;
-                        convY = y * w * 4;
-                        p = convX + convY;
                         if (dataT[x][y] === 0 && dataO[p] === BLACK)
                         {
+                            var bail = false;
+
                             pixelQueue = [];
                             pixelQueue.push(p);
-                            bail = false;
                             dataT[x][y] = 1;
-                            for (i = 0; (i < pixelQueue.length) && (pixelQueue.length <= size); i++)
+
+                            for (var i = 0; (i < pixelQueue.length) && (pixelQueue.length <= size); i++)
                             {
-                                center = pixelQueue[i];
+                                var centre = pixelQueue[i],
+                                    cX = (centre % (w * 4)) / 4,
+                                    cY = (centre - (cX * 4)) / (w * 4),
+                                    y2i = (cY > 0) ? (cY - 1) : 0,
+                                    y2Lim = Math.min(cY + 2, h);
 
-                                cX = (center % (w * 4)) / 4;
-                                cY = (center - (cX * 4)) / (w * 4);
-                                x2i = (cX > 0) ? (cX - 1) : 0;
-                                y2i = (cY > 0) ? (cY - 1) : 0;
-
-                                x2Lim = Math.min(cX + 2, w);
-                                y2Lim = Math.min(cY + 2, h);
-                                for (y2 = y2i; y2 < y2Lim; y2++)
+                                for (var y2 = y2i; y2 < y2Lim; y2++)
                                 {
-                                    for (x2 = x2i; x2 < x2Lim; x2++)
+                                    var x2i = (cX > 0) ? (cX - 1) : 0,
+                                        x2Lim = Math.min(cX + 2, w);
+
+                                    for (var x2 = x2i; x2 < x2Lim; x2++)
                                     {
                                         if (dataT[x2][y2] === 2)
                                         {
                                             bail = true;
                                             break;
                                         }
-                                        convX2 = x2 * 4;
-                                        convY2 = y2 * w * 4;
-                                        p2 = convX2 + convY2;
+
+                                        var convX2 = x2 * 4,
+                                            convY2 = y2 * w * 4,
+                                            p2 = convX2 + convY2;
+
                                         if (dataT[x2][y2] === 0 && dataO[p2] === BLACK)
                                         {
                                             dataT[x2][y2] = 1;
@@ -410,7 +401,8 @@
                             {
                                 while (pixelQueue.length > 0)
                                 {
-                                    pointO = pixelQueue.pop();
+                                    var pointO = pixelQueue.pop();
+
                                     dataO[pointO] = WHITE;
                                     dataO[pointO + 1] = WHITE;
                                     dataO[pointO + 2] = WHITE;
@@ -420,9 +412,10 @@
                             {
                                 while (pixelQueue.length > 0)
                                 {
-                                    pointT = pixelQueue.pop();
-                                    pX = (pointT % (w * 4)) / 4;
-                                    pY = (pointT - (pX * 4)) / (w * 4);
+                                    var pointT = pixelQueue.pop(),
+                                        pX = (pointT % (w * 4)) / 4,
+                                        pY = (pointT - (pX * 4)) / (w * 4);
+
                                     dataT[pX][pY] = 2;
                                 }
                             }
@@ -431,6 +424,23 @@
                 }
                 context.putImageData(imageDataO, 0, 0);
             }
+        };
+
+        var make2DZeroArray = function (w, h)
+        {
+            var array = [];
+
+            for (var i = 0; i < w; i++)
+            {
+                array[i] = [];
+
+                for (var j = 0; j < h; j++)
+                {
+                    array[i][j] = 0;
+                }
+            }
+
+            return array;
         };
 
         init();
@@ -452,4 +462,4 @@
             element.data('RKDespeckle', template);
         });
     };
-})(jQuery)
+})(jQuery);
