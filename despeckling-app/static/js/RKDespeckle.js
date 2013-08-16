@@ -124,7 +124,7 @@
         var drawViewPortAndBox = function ()
         {
             var canvas = self.getViewPortCanvas();
-            settings.viewPortWidth = $(window).height() - canvas.offsetTop - 10;
+            settings.viewPortWidth = Math.min(settings.imageObj.height, $(window).height() - canvas.offsetTop - 10);
             canvas.width = settings.viewPortWidth;
             canvas.height = settings.viewPortWidth;
 
