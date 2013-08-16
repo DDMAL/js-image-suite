@@ -114,9 +114,9 @@
         {
             var canvas = self.getViewPortCanvas(),
                 viewPortHeight = Math.min(
-                    $(window).height() - canvas.offsetTop - 10,
+                    $(window).height() - canvas.offsetTop - 15,
                     settings.imageObj.height,
-                    ($(window).width() - canvas.offsetLeft - 10) / settings.subImageAspectRatio,
+                    ($(window).width() - canvas.offsetLeft - 15) / settings.subImageAspectRatio,
                     settings.imageObj.width / settings.subImageAspectRatio
                 );
 
@@ -137,6 +137,8 @@
         {
             settings.subImageRect.setWidth(settings.viewPortSize.w * settings.scaleVal);
             settings.subImageRect.setHeight(settings.viewPortSize.h * settings.scaleVal);
+            settings.subImageRect.setX(Math.min(settings.subImageRect.getX(), settings.imageThumb.width - settings.subImageRect.getWidth()));
+            settings.subImageRect.setY(Math.min(settings.subImageRect.getY(), settings.imageThumb.height - settings.subImageRect.getHeight()));
             settings.layerB.draw();
         };
 
