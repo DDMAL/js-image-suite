@@ -22,11 +22,15 @@
     </body>
     <script type="text/javascript">
         $(document).ready(function() {
+            var initialSpeckleSize = 10;
+
             $("#despeckle-view").RKDespeckle({
                 imageUrl: "static/images/sheet-music.jpg",  // RGB image
                 thumbUrl: "static/images/sheet-music-small.jpg",  // Same image, smaller than the browser window
                 displayOutput: document.getElementById("speckle-size-display"),
-                binarizationThreshold: 150
+                binarizationThreshold: 150,
+                subImageAspectRatio: 4 / 3,
+                speckleSize: initialSpeckleSize
             });
 
             var rkDespeckle = $("#despeckle-view").data("RKDespeckle");
@@ -37,7 +41,7 @@
                 max: 100,
                 orientation: 'horizontal',
                 step: 1,
-                value: 0,
+                value: initialSpeckleSize,
                 range: false,
                 slide: function (event, ui) {
                     rkDespeckle.despeckle(ui.value);

@@ -7,7 +7,8 @@
             thumbUrl: null,
             binarizationThreshold: 100,
             speckleSize: 0,
-            displayOutput: null
+            displayOutput: null,
+            subImageAspectRatio: 16 / 9
         };
 
         var settings = $.extend({}, defaults, options);
@@ -15,11 +16,11 @@
         var instanceVariables = {
             imageObj: null,          // The main image is quite large and is only viewed through the viewPort
             imageThumb: null,        // The thumbnail is displayed completely, it's the larger top view that has the blue viewBox
-            blueViewBox: null,       // The blue box that drags around the thumbnail to choose what part of the image to despeckle and display
+            subImageRect: null,      // The blue rectangle that drags around the thumbnail to choose what part of the image to despeckle and display
             scaleVal: null,          // imageThumbWidth / imageObjWidth
             kineticContainer: null,
             viewPortCanvas: null,
-            viewPortWidth: null,
+            viewPortSize: null,
             kineticImage: null,
             stage: null,
             layerB: null
@@ -56,26 +57,28 @@
         var initializeImageThumb = function ()
         {
             settings.scaleVal = settings.imageThumb.width / settings.imageObj.width;
-
+            
             instantiateKinetic();
 
-            window.onresize = drawViewPortAndBox;
-            drawViewPortAndBox();
+            window.onresize = drawViewPortAndSubImageRect;
+            drawViewPortAndSubImageRect();
 
             initializeMouseBehaviours();
         };
 
         var instantiateKinetic = function ()
         {
-            var layer, image, boxWidth;
+            var layer;
 
             settings.stage = new Kinetic.Stage({
                 container: settings.kineticContainer.id,
                 width: settings.imageThumb.width,
                 height: settings.imageThumb.height
             });
+
             layer = new Kinetic.Layer();
-            image = new Kinetic.Image({
+
+            settings.kineticImage = new Kinetic.Image({
                 x: 0,
                 y: 0,
                 width: settings.imageThumb.width,
@@ -85,59 +88,55 @@
                 strokewidth: 2
             });
 
-            layer.add(image);
+            layer.add(settings.kineticImage);
             settings.stage.add(layer);
 
             settings.layerB = new Kinetic.Layer();
 
-            boxWidth = settings.viewPortWidth * settings.scaleVal;
-            settings.blueViewBox = new Kinetic.Rect({
+            settings.subImageRect = new Kinetic.Rect({
                 x: 0,
                 y: 0,
-                width: boxWidth,
-                height: boxWidth,
+                width: 5,  // gets set later (drawViewPortAndSubImageRect)
+                height: 5,
                 fill: 'blue',
                 stroke: 'black',
                 strokeWidth: 2,
                 opacity: 0.2,
                 draggable: false,
-                dragBoundfunc: function(pos) {
-                    var newX = Math.max(pos.x, 0),
-                        newY = Math.max(pos.y, 0);
-
-                    newX = Math.min(newX, settings.imageThumb.width - boxWidth);
-                    newY = Math.min(newY, settings.imageThumb.height - boxHeight);
-
-                    return {
-                        x: newX,
-                        y: newY
-                    };
-                },
-                name: 'viewBox'
+                name: 'subImageRect'
             });
 
-            settings.layerB.add(settings.blueViewBox);
+            settings.layerB.add(settings.subImageRect);
             settings.stage.add(settings.layerB);
-            settings.kineticImage = image;
         };
 
-        var drawViewPortAndBox = function ()
+        var drawViewPortAndSubImageRect = function ()
         {
-            var canvas = self.getViewPortCanvas();
-            settings.viewPortWidth = Math.min(settings.imageObj.height, $(window).height() - canvas.offsetTop - 10);
-            canvas.width = settings.viewPortWidth;
-            canvas.height = settings.viewPortWidth;
+            var canvas = self.getViewPortCanvas(),
+                viewPortHeight = Math.min(
+                    $(window).height() - canvas.offsetTop - 10,
+                    settings.imageObj.height,
+                    ($(window).width() - canvas.offsetLeft - 10) / settings.subImageAspectRatio,
+                    settings.imageObj.width / settings.subImageAspectRatio
+                );
 
-            drawBlueViewBox();
+            settings.viewPortSize = {
+                h: viewPortHeight,
+                w: viewPortHeight * settings.subImageAspectRatio
+            };
+
+            canvas.height = settings.viewPortSize.h;
+            canvas.width = settings.viewPortSize.w;
+
+            drawSubImageRect();
 
             self.despeckle(self.speckleSize);
         };
 
-        var drawBlueViewBox = function ()
+        var drawSubImageRect = function ()
         {
-            boxWidth = settings.viewPortWidth * settings.scaleVal;
-            settings.blueViewBox.setWidth(boxWidth);
-            settings.blueViewBox.setHeight(boxWidth);
+            settings.subImageRect.setWidth(settings.viewPortSize.w * settings.scaleVal);
+            settings.subImageRect.setHeight(settings.viewPortSize.h * settings.scaleVal);
             settings.layerB.draw();
         };
 
@@ -147,15 +146,15 @@
 
             thumbnailMouseDown = false;
 
-            settings.blueViewBox.on("mousedown", function (e)
+            settings.subImageRect.on("mousedown", function (e)
             {
-                moveThumbnailBox(e);
+                moveSubImageRect(e);
                 thumbnailMouseDown = true;
             });
 
             settings.kineticImage.on("mousedown", function (e)
             {
-                moveThumbnailBox(e);
+                moveSubImageRect(e);
                 thumbnailMouseDown = true;
             });
 
@@ -175,18 +174,18 @@
             {
                 if (thumbnailMouseDown)
                 {
-                    moveThumbnailBox(e);
+                    moveSubImageRect(e);
                 }
                 else if (viewportMouseDown)
                 {
-                    moveThumbnailBoxRelatively(e, prevX, prevY);
+                    moveSubImageRectRelatively(e, prevX, prevY);
                     prevX = e.clientX;
                     prevY = e.clientY;
                     binarise(settings.binarizationThreshold);
                 }
             });
 
-            window.addEventListener("mouseup", function (e)  // should be an event on window
+            window.addEventListener("mouseup", function (e)
             {
                 if (thumbnailMouseDown)
                 {
@@ -196,7 +195,7 @@
                 else if (viewportMouseDown)
                 {
                     viewportMouseDown = false;
-                    moveThumbnailBoxRelatively(e, prevX, prevY);
+                    moveSubImageRectRelatively(e, prevX, prevY);
                     self.despeckle();
                 }
             });
@@ -212,49 +211,49 @@
             return settings.viewPortCanvas;
         };
 
-        var moveThumbnailBox = function (e)
+        var moveSubImageRect = function (e)
         {
             var kineticPosition = $(settings.kineticContainer).position(),
                 mousePosition = {
                     x: event.pageX - kineticPosition.left,
                     y: event.pageY - kineticPosition.top
                 },
-                boxWidth = settings.viewPortWidth * settings.scaleVal,
-                newX = mousePosition.x - boxWidth / 2,
-                newY = mousePosition.y - boxWidth / 2;
-                // Translates coordinates from the middle of the box (mousePos) to the top left corner of the box, where it's drawn from
+                newX = mousePosition.x - settings.subImageRect.getWidth() / 2;
+                newY = mousePosition.y - settings.subImageRect.getHeight() / 2;
+                // Translates coordinates from the middle of the rect (mousePos) to the top left corner of the rect, where it's drawn from
 
-            setViewBoxPosition(newX, newY);
+            setSubImageRectPosition(newX, newY);
 
             binarise(settings.binarizationThreshold);
         };
 
-        var moveThumbnailBoxRelatively = function(e, prevX, prevY)
+        var moveSubImageRectRelatively = function(e, prevX, prevY)
         {
+            // Relative motion is required when the user drags on the viewPort (not the subImageRect)
+
             var dX = e.clientX - prevX,
                 dY = e.clientY - prevY,
-                boxWidth = settings.viewPortWidth * settings.scaleVal,
-                newX = settings.blueViewBox.getX() - (dX * settings.scaleVal),
-                newY = settings.blueViewBox.getY() - (dY * settings.scaleVal);
+                newX = settings.subImageRect.getX() - (dX * settings.scaleVal),
+                newY = settings.subImageRect.getY() - (dY * settings.scaleVal);
 
-            setViewBoxPosition(newX, newY);
+            setSubImageRectPosition(newX, newY);
         };
 
-        var setViewBoxPosition = function (newX, newY)
+        var setSubImageRectPosition = function (newX, newY)
         {
-            // The view box position is allowed to be non-integer
+            // The position is allowed to be non-integer
 
             newX = Math.max(newX, 0);
-            newX = Math.min(newX, settings.imageThumb.width - boxWidth);
+            newX = Math.min(newX, settings.imageThumb.width - settings.subImageRect.getWidth());
             newY = Math.max(newY, 0);
-            newY = Math.min(newY, settings.imageThumb.height - boxWidth);
+            newY = Math.min(newY, settings.imageThumb.height - settings.subImageRect.getHeight());
 
-            settings.blueViewBox.setX(newX);
-            settings.blueViewBox.setY(newY);
-            settings.blueViewBox.getLayer().draw();
+            settings.subImageRect.setX(newX);
+            settings.subImageRect.setY(newY);
+            settings.subImageRect.getLayer().draw();
         };
 
-        // Binarises the image data under the blueViewBox and displays it with the viewPort
+        // Binarises the image data under the subImageRect and displays it with the viewPort
         var binarise = function (thresh)
         {
             var rScale = 0.2989,
@@ -262,10 +261,10 @@
                 bScale = 0.1140,
                 x, y;
 
-            if (settings.blueViewBox)
+            if (settings.subImageRect)
             {
-                x = Math.round(settings.blueViewBox.getX() / settings.scaleVal);
-                y = Math.round(settings.blueViewBox.getY() / settings.scaleVal);
+                x = Math.round(settings.subImageRect.getX() / settings.scaleVal);
+                y = Math.round(settings.subImageRect.getY() / settings.scaleVal);
             }
             else
             {
