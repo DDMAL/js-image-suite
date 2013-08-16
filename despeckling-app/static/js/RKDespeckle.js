@@ -143,7 +143,7 @@
 
         var initializeMouseBehaviours = function ()
         {
-            var bodyDOM, canvas, thumbnailMouseDown, viewportMouseDown, prevX, prevY;
+            var canvas, thumbnailMouseDown, viewportMouseDown, prevX, prevY;
 
             thumbnailMouseDown = false;
             settings.blueViewBox.on("mousedown", function ()
@@ -169,8 +169,7 @@
                 prevY = e.clientY;
             });
 
-            bodyDOM = document.getElementsByTagName("body")[0];
-            bodyDOM.addEventListener("mousemove", function (e)
+            window.addEventListener("mousemove", function (e)
             {
                 if (thumbnailMouseDown)
                 {
@@ -185,7 +184,7 @@
                 }
             });
 
-            bodyDOM.addEventListener("mouseup", function (e)
+            window.addEventListener("mouseup", function (e)  // should be an event on window
             {
                 if (thumbnailMouseDown)
                 {
@@ -213,21 +212,19 @@
 
         var moveThumbnailBox = function (e)
         {
-            var pos;
+            var kineticPosition = $(settings.kineticContainer).position(),
+                mousePosition = {
+                    x: event.pageX - kineticPosition.left,
+                    y: event.pageY - kineticPosition.top
+                },
+                boxWidth = settings.viewPortWidth * settings.scaleVal,
+                newX = mousePosition.x - boxWidth / 2,
+                newY = mousePosition.y - boxWidth / 2;
+                // Translates coordinates from the middle of the box (mousePos) to the top left corner of the box, where it's drawn from
 
-            pos = settings.stage.getMousePosition(e);
+            setViewBoxPosition(newX, newY);
 
-            if (pos !== undefined)
-            {
-                var boxWidth = settings.viewPortWidth * settings.scaleVal,
-                    nX = pos.x - boxWidth / 2,
-                    nY = pos.y - boxWidth / 2;
-                    // Translates coordinates from the middle of the box (mousePos) to the top left corner of the box, where it's drawn from
-
-                setViewBoxPosition(nX, nY);
-
-                binarise(settings.binarizationThreshold);
-            }
+            binarise(settings.binarizationThreshold);
         };
 
         var moveThumbnailBoxRelatively = function(e, prevX, prevY)
