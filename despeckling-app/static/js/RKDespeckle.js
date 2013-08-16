@@ -5,7 +5,7 @@
         var defaults = {
             imageUrl: null,
             thumbUrl: null,
-            binariseThreshold: 100,
+            binarizationThreshold: 100,
             speckleSize: 0,
             displayOutput: null
         };
@@ -181,7 +181,7 @@
                     moveThumbnailBoxRelatively(e, prevX, prevY);
                     prevX = e.clientX;
                     prevY = e.clientY;
-                    binarise(settings.binariseThreshold);
+                    binarise(settings.binarizationThreshold);
                 }
             });
 
@@ -226,7 +226,7 @@
 
                 setViewBoxPosition(nX, nY);
 
-                binarise(settings.binariseThreshold);
+                binarise(settings.binarizationThreshold);
             }
         };
 
@@ -258,9 +258,8 @@
         {
             var rScale = 0.2989,
                 gScale = 0.5870,
-                bScale = 0.1140;
-
-            var x, y;  // where to get data out of imageObj
+                bScale = 0.1140,
+                x, y;
 
             if (settings.blueViewBox)
             {
@@ -275,17 +274,10 @@
 
             var canvas = self.getViewPortCanvas(),
                 context = canvas.getContext("2d");
-                // try imageObj = settings.imageObj; XXX
 
-            if (x === 0 && y === 0)
-            {
-                // why is this if statement necessary, the 'else' looks generic enough XXX
-                context.drawImage(settings.imageObj, x, y);
-            }
-            else
-            {
-                context.drawImage(settings.imageObj, x, y, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
-            }
+            x = Math.min(x, settings.imageObj.width - canvas.width);
+            y = Math.min(y, settings.imageObj.height - canvas.height);
+            context.drawImage(settings.imageObj, x, y, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
 
             var imageData = context.getImageData(0, 0, canvas.width, canvas.height),
                 data = imageData.data,
@@ -297,7 +289,6 @@
 
                 if (greyscaleValue > thresh)
                 {
-                    // this part is unnecessary - just write numbers >255 to the canvas.  XXX
                     data[i] = 255;
                     data[i + 1] = 255;
                     data[i + 2] = 255;
@@ -335,7 +326,7 @@
 
             canvas = self.getViewPortCanvas();
             context = canvas.getContext("2d");
-            binarise(settings.binariseThreshold);
+            binarise(settings.binarizationThreshold);
 
             if (settings.displayOutput)
             {
